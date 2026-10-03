@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deletePet, getPet } from '../../api/pets.js';
 import { AppShell } from '../../components/AppShell.jsx';
+import { HealthRecords } from '../../components/HealthRecords.jsx';
 import { PetAvatar } from '../../components/PetAvatar.jsx';
 
 function show(value, suffix = '') {
@@ -97,6 +98,8 @@ export function PetDetailPage() {
             <h2 id="notes-title">Medical notes</h2>
             <p className="notes-text">{show(pet.medical_notes)}</p>
           </section>
+
+          <HealthRecords petId={id} />
 
           <section className="danger-section" aria-labelledby="remove-title">
             <h2 id="remove-title">Remove pet</h2>

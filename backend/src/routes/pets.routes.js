@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../config/database.js';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
+import { removeDocumentFile } from '../services/document-files.js';
 
 export const petsRouter = Router();
 petsRouter.use(requireAuth, requireRole('owner'));
@@ -132,10 +133,15 @@ petsRouter.put('/:id', validId, async (request, response) => {
 });
 
 petsRouter.delete('/:id', validId, async (request, response) => {
+  const documents = await pool.query(
+    'SELECT d.id FROM documents d JOIN pets p ON p.id = d.pet_id WHERE p.id = $1 AND p.owner_id = $2',
+    [request.params.id, request.user.id]
+  );
   const { rows } = await pool.query(
     'DELETE FROM pets WHERE id = $1 AND owner_id = $2 RETURNING id',
     [request.params.id, request.user.id]
   );
   if (!rows[0]) return response.status(404).json({ error: 'Pet not found' });
+  await Promise.all(documents.rows.map((document) => removeDocumentFile(document.id)));
   response.sendStatus(204);
 });

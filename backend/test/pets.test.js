@@ -59,6 +59,10 @@ test('owners can manage only their own pets', async (context) => {
       pets.delete(values[0]);
       return { rows: [{ id: values[0] }] };
     }
+    if (sql.startsWith('SELECT d.id FROM documents')) {
+      assert.match(sql, /p.owner_id = \$2/);
+      return { rows: [] };
+    }
     throw new Error(`Unexpected query: ${sql}`);
   };
 
@@ -114,4 +118,3 @@ test('owners can manage only their own pets', async (context) => {
   assert.equal((await request(`/${newPetId}`, ownerId, 'DELETE')).status, 204);
   assert.equal((await request(`/${newPetId}`, ownerId)).status, 404);
 });
-

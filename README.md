@@ -1,6 +1,6 @@
 # Pet Health Passport
 
-Pet Health Passport is a full-stack web application for keeping a pet's health information in one organized, shareable place. Authentication and owner-managed pet profiles are implemented.
+Pet Health Passport is a full-stack web application for keeping a pet's health information in one organized place. Authentication, owner-managed pet profiles, and health records are implemented.
 
 ## Project overview
 
@@ -39,9 +39,14 @@ POST /api/pets
 GET /api/pets/:id
 PUT /api/pets/:id
 DELETE /api/pets/:id
+GET/POST /api/pets/:petId/:type
+GET/PUT/DELETE /api/:type/:id
+GET /api/documents/:id/file
 ```
 
 Registration always creates an `owner` account. The `/me` endpoint requires a bearer token. Pet routes are restricted to owners and only return or change pets owned by the authenticated account. Deleting a pet also deletes its related records through database foreign keys.
+
+Health record `:type` is one of `vaccinations`, `medical-records`, `allergies`, `medications`, or `weights`. The list and create routes also support `documents`; documents accept multipart form data with `title`, `document_type`, and a PDF, PNG, or JPEG `file` (up to 10 MB). Documents can be deleted at `/api/documents/:id`. Document downloads require an owner token. Docker stores uploaded files in the `uploads_data` volume.
 
 ## Run locally
 
@@ -87,4 +92,4 @@ database/  PostgreSQL schema and demo seed data
 
 ## Next milestone
 
-Add vaccination and medical records to each pet profile.
+Add appointment management and reminders.

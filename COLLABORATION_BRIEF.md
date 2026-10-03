@@ -85,7 +85,13 @@ Browser -> React/Vite or Nginx -> Express API -> PostgreSQL
 
 ระบบ backend จำกัดข้อมูลด้วย `owner_id` เพื่อให้ owner เห็นและแก้ไขได้เฉพาะสัตว์เลี้ยงของตัวเอง
 
-### 5. Developer Experience
+### 5. Health Records
+
+- เจ้าของสัตว์เพิ่ม แก้ไข และลบข้อมูลวัคซีน การรักษา อาการแพ้ ยา และน้ำหนักจากหน้า pet detail
+- อัปโหลดเอกสาร PDF, PNG หรือ JPEG ขนาดไม่เกิน 10 MB และดาวน์โหลดได้หลังล็อกอิน
+- API ตรวจ `owner_id` ทุกครั้งก่อนอ่านหรือแก้ไขข้อมูล และลบไฟล์เมื่อเอกสารหรือสัตว์เลี้ยงถูกลบ
+
+### 6. Developer Experience
 
 - มี `open-project.bat` สำหรับเปิดโปรเจกต์บน Windows
 - มี `.env.example` สำหรับตั้งค่า environment
@@ -124,19 +130,6 @@ http://localhost:5173
 ถ้ารันครั้งแรกต้องมีไฟล์ `.env` ที่ root และ `backend/.env` โดยสามารถดูตัวอย่างจาก `.env.example` และ `backend/.env.example`
 
 ## งานถัดไปที่ควรทำ
-
-### Phase 4: Health Records
-
-เพิ่มระบบข้อมูลสุขภาพในหน้า pet detail:
-
-- Vaccination records
-- Medical records
-- Allergy records
-- Medication records
-- Weight records
-- Health documents
-
-แนะนำให้เริ่มจาก vaccination records และ medical records ก่อน เพราะเป็น core feature ของระบบ health passport
 
 ### Phase 5: Appointments and Reminders
 
@@ -191,21 +184,17 @@ POST   /api/pets
 GET    /api/pets/:id
 PUT    /api/pets/:id
 DELETE /api/pets/:id
+
+GET/POST /api/pets/:petId/:type
+GET/PUT/DELETE /api/:type/:id
+GET    /api/documents/:id/file
 ```
+
+Health record `:type` รองรับ `vaccinations`, `medical-records`, `allergies`, `medications`, `weights`; การ list/create รองรับ `documents` ด้วย
 
 ## API ที่ควรเพิ่มต่อ
 
 ```text
-GET    /api/pets/:petId/vaccinations
-POST   /api/pets/:petId/vaccinations
-PUT    /api/vaccinations/:id
-DELETE /api/vaccinations/:id
-
-GET    /api/pets/:petId/medical-records
-POST   /api/pets/:petId/medical-records
-PUT    /api/medical-records/:id
-DELETE /api/medical-records/:id
-
 GET    /api/appointments
 POST   /api/appointments
 PATCH  /api/appointments/:id/status
