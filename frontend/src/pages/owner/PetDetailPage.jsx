@@ -78,7 +78,10 @@ export function PetDetailPage() {
               <h1>{pet.name}</h1>
               <p>{[pet.species, pet.breed].filter(Boolean).join(' / ')}</p>
             </div>
-            <Link className="secondary-link" to={`/pets/${id}/edit`}>Edit profile</Link>
+            <div className="pet-profile-actions">
+              <Link className="secondary-link" to={`/appointments/new?petId=${id}`}>Schedule visit</Link>
+              <Link className="secondary-link" to={`/pets/${id}/edit`}>Edit profile</Link>
+            </div>
           </div>
 
           <section className="details-section" aria-labelledby="details-title">

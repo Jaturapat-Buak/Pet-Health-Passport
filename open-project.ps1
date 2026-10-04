@@ -131,7 +131,7 @@ $frontendPort = Get-EnvValue -Path (Join-Path $ProjectRoot ".env") -Name "FRONTE
 $appUrl = "http://localhost:$frontendPort"
 
 Write-Step "Starting containers"
-& docker compose up --build -d
+& docker compose up --build -d --wait --wait-timeout 120
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Docker Compose failed to start the project." -ForegroundColor Red
     exit $LASTEXITCODE

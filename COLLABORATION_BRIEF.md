@@ -91,7 +91,15 @@ Browser -> React/Vite or Nginx -> Express API -> PostgreSQL
 - อัปโหลดเอกสาร PDF, PNG หรือ JPEG ขนาดไม่เกิน 10 MB และดาวน์โหลดได้หลังล็อกอิน
 - API ตรวจ `owner_id` ทุกครั้งก่อนอ่านหรือแก้ไขข้อมูล และลบไฟล์เมื่อเอกสารหรือสัตว์เลี้ยงถูกลบ
 
-### 6. Developer Experience
+### 6. Appointments and Reminders
+
+- เจ้าของสัตว์สร้าง ดู แก้ไข ลบ และเปลี่ยนสถานะนัดหมายได้
+- หน้า Appointments แสดงนัดหมายที่กำลังจะมาถึงหรือทั้งหมด
+- หน้า Reminders แสดงเหตุการณ์ใน 30 วันข้างหน้าจากวันนัด วันวัคซีน วันสิ้นสุดยา และวันติดตามผล
+- กดอ่านแจ้งเตือนแล้วสถานะถูกเก็บในฐานข้อมูล; ถ้าวันของเหตุการณ์เปลี่ยน ระบบจะถือเป็นแจ้งเตือนใหม่
+- แจ้งเตือนอยู่ในแอปเท่านั้น ยังไม่มีอีเมลหรือ push notification
+
+### 7. Developer Experience
 
 - มี `open-project.bat` สำหรับเปิดโปรเจกต์บน Windows
 - มี `.env.example` สำหรับตั้งค่า environment
@@ -129,47 +137,43 @@ http://localhost:5173
 
 ถ้ารันครั้งแรกต้องมีไฟล์ `.env` ที่ root และ `backend/.env` โดยสามารถดูตัวอย่างจาก `.env.example` และ `backend/.env.example`
 
-## งานถัดไปที่ควรทำ
+## สถานะและงานถัดไป
 
-### Phase 5: Appointments and Reminders
+### Phase 6: Dashboard (เสร็จแล้ว)
 
-- เพิ่ม appointment CRUD
-- แสดง upcoming appointments
-- สร้าง reminders จากวันสำคัญ เช่น วันนัดหมาย วันวัคซีนครั้งต่อไป วัน follow-up
-- เพิ่ม mark as read สำหรับ reminders
-
-### Phase 6: Dashboard
-
-- Owner dashboard แสดงจำนวนสัตว์เลี้ยง ข้อมูลล่าสุด และ reminder สำคัญ
+- Owner dashboard แสดงจำนวนสัตว์เลี้ยง นัดหมาย วัคซีน ยาที่ใช้อยู่ reminder ที่ยังไม่อ่าน ข้อมูลสุขภาพล่าสุด และกราฟน้ำหนักแยกตามสัตว์เลี้ยง
 - Admin dashboard แสดงจำนวน users, pets, vaccination records, appointments และ activity ล่าสุด
+
+### Phase 7: DevTools and Jenkins (เตรียมพร้อมแล้ว)
+
+- Docker Compose มี health check ครบทั้ง PostgreSQL, backend และ frontend
+- Jenkins pipeline รองรับ Windows/Linux, รัน test/build/deploy/health check และรับ `.env` จาก Jenkins Secret file
+- เพิ่ม Jenkins local setup ผ่าน `docker-compose.jenkins.yml`, `jenkins/Dockerfile` และ `open-jenkins.ps1`
+- เตรียม `githubPush()` และคู่มือ `docs/JENKINS_SETUP.md`; webhook จริงรอ Jenkins URL ที่ GitHub เข้าถึงได้
+
+### Phase 8: Final Preparation (ถัดไป)
+
+- ทดสอบ demo flow, ปรับ UI และเตรียมรายงาน/สไลด์
 
 ## แนวทางแบ่งงานในทีม
 
 ### Frontend
 
-- ทำหน้า UI สำหรับ vaccination และ medical records
-- ทำ component เช่น table, form, timeline, empty state และ loading state
-- เชื่อม API ผ่าน Axios
-- ปรับ dashboard ให้แสดงข้อมูลจริง
+- ทดสอบ demo flow และปรับ UI จาก feedback
 
 ### Backend
 
-- เพิ่ม route และ validation สำหรับ health records
-- ตรวจสิทธิ์ owner ทุก endpoint
-- เขียน test สำหรับกรณี owner isolation
-- เพิ่ม endpoint dashboard summary
+- ดูแล dashboard summary endpoints และ role checks ระหว่างทดสอบระบบ
 
 ### Database
 
-- ตรวจ schema ว่ารองรับ field ที่ต้องใช้ครบ
-- เพิ่ม seed data สำหรับ vaccination, medical records, appointments และ reminders
-- เพิ่ม index ถ้าจำเป็น
+- ตรวจประสิทธิภาพ dashboard queries เมื่อข้อมูลเพิ่ม และเพิ่ม index ตามผลทดสอบ
 
 ### DevOps / Documentation
 
-- ดูแล Docker Compose และ Jenkinsfile
-- อัปเดต README เมื่อเพิ่ม feature
-- เตรียม demo flow และ screenshot สำหรับส่งงาน
+- เปิด Jenkins ด้วย `open-jenkins.ps1`, สร้าง credential `pet-health-passport-env`, แล้วสร้าง Pipeline job จาก GitHub repo
+- ตั้ง GitHub webhook เมื่อมี public Jenkins URL
+- ทดสอบ pipeline บน Jenkins จริง และเตรียม demo flow / screenshot สำหรับส่งงาน
 
 ## API ที่มีตอนนี้
 
@@ -188,20 +192,17 @@ DELETE /api/pets/:id
 GET/POST /api/pets/:petId/:type
 GET/PUT/DELETE /api/:type/:id
 GET    /api/documents/:id/file
+
+GET/POST /api/appointments
+GET/PUT/DELETE /api/appointments/:id
+PATCH  /api/appointments/:id/status
+GET    /api/reminders
+PATCH  /api/reminders/:id/read
+GET    /api/dashboard/owner
+GET    /api/dashboard/admin
 ```
 
 Health record `:type` รองรับ `vaccinations`, `medical-records`, `allergies`, `medications`, `weights`; การ list/create รองรับ `documents` ด้วย
-
-## API ที่ควรเพิ่มต่อ
-
-```text
-GET    /api/appointments
-POST   /api/appointments
-PATCH  /api/appointments/:id/status
-
-GET    /api/reminders
-PATCH  /api/reminders/:id/read
-```
 
 ## Demo Flow ที่ใช้เล่าโปรเจกต์
 
@@ -212,7 +213,7 @@ PATCH  /api/reminders/:id/read
 4. แสดงข้อมูลพื้นฐานของ Milo
 5. เพิ่ม vaccination record หรือ medical record
 6. เพิ่ม appointment สำหรับ follow-up
-7. แสดง reminder บน dashboard
+7. แสดง reminder ในหน้า Reminders
 8. Login ด้วย admin เพื่อดูภาพรวมระบบ
 ```
 
