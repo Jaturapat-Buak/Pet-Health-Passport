@@ -56,7 +56,7 @@ function validDate(value) {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-function readRecord(body, fields) {
+export function readRecord(body, fields) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
   const record = {};
   for (const [key, rule] of Object.entries(fields)) {
@@ -96,6 +96,8 @@ function readRecord(body, fields) {
   if (record.start_date && record.end_date && record.end_date < record.start_date) return null;
   return record;
 }
+
+export const medicalRecordFields = resources['medical-records'].fields;
 
 function resourceFor(request, response) {
   const resource = resources[request.params.resource];

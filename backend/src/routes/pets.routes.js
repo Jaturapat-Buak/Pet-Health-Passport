@@ -112,6 +112,44 @@ petsRouter.get('/:id', validId, async (request, response) => {
   response.json({ pet: rows[0] });
 });
 
+petsRouter.get('/:id/vets', validId, async (request, response) => {
+  const { rows } = await pool.query(
+    `SELECT u.id, u.name, u.email, a.created_at FROM pet_vet_access a
+     JOIN users u ON u.id = a.vet_id JOIN pets p ON p.id = a.pet_id
+     WHERE a.pet_id = $1 AND p.owner_id = $2 ORDER BY u.name, u.id`,
+    [request.params.id, request.user.id]
+  );
+  response.json({ vets: rows });
+});
+
+petsRouter.post('/:id/vets', validId, async (request, response) => {
+  const email = request.body?.email;
+  if (typeof email !== 'string' || email.trim().length > 255 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return response.status(400).json({ error: 'Enter a valid veterinarian email' });
+  }
+  const { rows } = await pool.query(
+    `INSERT INTO pet_vet_access (pet_id, vet_id, granted_by)
+     SELECT p.id, u.id, $2 FROM pets p JOIN users u ON LOWER(u.email) = LOWER($3) AND u.role = 'vet'
+     WHERE p.id = $1 AND p.owner_id = $2
+     ON CONFLICT (pet_id, vet_id) DO NOTHING RETURNING vet_id`,
+    [request.params.id, request.user.id, email.trim()]
+  );
+  if (!rows[0]) return response.status(404).json({ error: 'Pet or veterinarian not found, or access already granted' });
+  response.status(201).json({ vet_id: rows[0].vet_id });
+});
+
+petsRouter.delete('/:id/vets/:vetId', validId, async (request, response) => {
+  if (!uuidPattern.test(request.params.vetId)) return response.status(400).json({ error: 'Invalid veterinarian ID' });
+  const { rows } = await pool.query(
+    `DELETE FROM pet_vet_access a USING pets p
+     WHERE a.pet_id = p.id AND p.id = $1 AND p.owner_id = $2 AND a.vet_id = $3 RETURNING a.vet_id`,
+    [request.params.id, request.user.id, request.params.vetId]
+  );
+  if (!rows[0]) return response.status(404).json({ error: 'Access not found' });
+  response.sendStatus(204);
+});
+
 petsRouter.put('/:id', validId, async (request, response) => {
   const pet = readPet(request.body);
   if (!pet) return response.status(400).json({ error: 'Enter valid pet details' });

@@ -4,6 +4,7 @@ import { deletePet, getPet } from '../../api/pets.js';
 import { AppShell } from '../../components/AppShell.jsx';
 import { HealthRecords } from '../../components/HealthRecords.jsx';
 import { PetAvatar } from '../../components/PetAvatar.jsx';
+import { VetAccess } from '../../components/VetAccess.jsx';
 
 function show(value, suffix = '') {
   return value == null || value === '' ? 'Not recorded' : `${value}${suffix}`;
@@ -103,6 +104,7 @@ export function PetDetailPage() {
           </section>
 
           <HealthRecords petId={id} />
+          <VetAccess petId={id} />
 
           <section className="danger-section" aria-labelledby="remove-title">
             <h2 id="remove-title">Remove pet</h2>

@@ -11,6 +11,8 @@ import { PetFormPage } from './pages/owner/PetFormPage.jsx';
 import { PetsPage } from './pages/owner/PetsPage.jsx';
 import { RemindersPage } from './pages/owner/RemindersPage.jsx';
 import { ProtectedRoute } from './routes/ProtectedRoute.jsx';
+import { SharedPetsPage } from './pages/vet/SharedPetsPage.jsx';
+import { SharedPetDetailPage } from './pages/vet/SharedPetDetailPage.jsx';
 
 export default function App() {
   return (
@@ -32,6 +34,8 @@ export default function App() {
           </Route>
           <Route element={<ProtectedRoute roles={['vet']} />}>
             <Route path="/vet/dashboard" element={<DashboardPage />} />
+            <Route path="/vet/pets" element={<SharedPetsPage />} />
+            <Route path="/vet/pets/:id" element={<SharedPetDetailPage />} />
           </Route>
           <Route element={<ProtectedRoute roles={['admin']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />

@@ -1,12 +1,12 @@
 import { api } from './client.js';
 
-export async function listHealthRecords(petId, type) {
-  const { data } = await api.get(`/pets/${petId}/${type}`);
+export async function listHealthRecords(petId, type, vet = false) {
+  const { data } = await api.get(`${vet ? '/vet' : ''}/pets/${petId}/${type}`);
   return data.records;
 }
 
-export async function createHealthRecord(petId, type, details) {
-  const { data } = await api.post(`/pets/${petId}/${type}`, details);
+export async function createHealthRecord(petId, type, details, vet = false) {
+  const { data } = await api.post(`${vet ? '/vet' : ''}/pets/${petId}/${type}`, details);
   return data.record;
 }
 
@@ -19,7 +19,7 @@ export async function deleteHealthRecord(type, id) {
   await api.delete(`/${type}/${id}`);
 }
 
-export async function downloadHealthDocument(id) {
-  const { data } = await api.get(`/documents/${id}/file`, { responseType: 'blob' });
+export async function downloadHealthDocument(id, vet = false) {
+  const { data } = await api.get(`${vet ? '/vet' : ''}/documents/${id}/file`, { responseType: 'blob' });
   return data;
 }

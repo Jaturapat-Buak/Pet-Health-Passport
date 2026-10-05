@@ -23,7 +23,7 @@ In Docker, Nginx proxies `/api` requests to the backend service. The browser kee
 
 ## Database design
 
-The PostgreSQL initialization scripts define `users`, `pets`, `vaccination_records`, `medical_records`, `allergy_records`, `medication_records`, `appointments`, `weight_records`, `documents`, and `reminders`.
+The PostgreSQL initialization scripts define `users`, `pets`, `pet_vet_access`, `vaccination_records`, `medical_records`, `allergy_records`, `medication_records`, `appointments`, `weight_records`, `documents`, and `reminders`.
 
 ## API endpoints
 
@@ -49,6 +49,13 @@ GET /api/reminders
 PATCH /api/reminders/:id/read
 GET /api/dashboard/owner
 GET /api/dashboard/admin
+GET/POST /api/pets/:id/vets
+DELETE /api/pets/:id/vets/:vetId
+GET /api/vet/pets
+GET /api/vet/pets/:id
+GET /api/vet/pets/:id/:type
+POST /api/vet/pets/:id/medical-records
+GET /api/vet/documents/:id/file
 ```
 
 Registration always creates an `owner` account. The `/me` endpoint requires a bearer token. Pet routes are restricted to owners and only return or change pets owned by the authenticated account. Deleting a pet also deletes its related records through database foreign keys.
@@ -57,7 +64,7 @@ Health record `:type` is one of `vaccinations`, `medical-records`, `allergies`, 
 
 Owners can create, edit, cancel, complete, and delete appointments for their own pets. `/api/appointments?view=upcoming` returns future appointments still marked upcoming. The reminders page derives in-app alerts for appointments, vaccinations, medication end dates, and medical follow-ups within the next 30 days. Read state is stored in the existing `reminders` table; changing an event date creates a new unread reminder. The app does not send email or push notifications.
 
-The owner dashboard shows account-scoped counts, upcoming care, unread reminders, recent health records, active medications, and a per-pet weight chart (latest 12 entries). The admin dashboard shows system-wide counts, recent users and pets, and recent pet activity. Both endpoints require their matching role. The vet dashboard currently shows account information only.
+The owner dashboard shows account-scoped counts, upcoming care, unread reminders, recent health records, active medications, and a per-pet weight chart (latest 12 entries). The admin dashboard shows system-wide counts, recent users and pets, and recent pet activity. Owners can share an individual pet with an existing vet account by email and revoke access at any time. Vets can view shared profiles, health records, and documents, and add medical visits. Vet access never permits editing or deleting existing records. The API checks access for every request.
 
 ## Run locally
 
@@ -74,6 +81,8 @@ docker compose up --build -d --wait --wait-timeout 120
 ```
 
 Copy `.env.example` to `.env` and replace `JWT_SECRET` with a long random value before starting. Compose waits until PostgreSQL, the API, and the frontend proxy are healthy. Open `http://localhost:5173`. Docker initializes the schema and seed data only when its PostgreSQL volume is first created.
+
+The backend creates the `pet_vet_access` table and adds medical-record author tracking at startup for existing PostgreSQL volumes. No volume reset is needed for this update.
 
 On Windows, you can also double-click `open-project.bat` from the project folder. It creates missing env files, fixes an unsafe local `JWT_SECRET`, starts Docker Compose, and opens the app when it is ready.
 
@@ -99,7 +108,7 @@ This starts Jenkins at `http://localhost:8080` with Node.js, npm, Docker CLI, Do
 
 ## Demo data
 
-The first database seed creates Milo, an orange domestic shorthair cat, with a rabies vaccination, a food allergy, a medical visit, a follow-up appointment, and a weight record.
+The first database seed creates Milo, an orange domestic shorthair cat, with a rabies vaccination, a food allergy, a medical visit, a follow-up appointment, and a weight record. It also shares Milo with the demo vet account. Care dates are relative to the day the database is initialized, so a fresh demo has an upcoming appointment and reminder. Existing PostgreSQL volumes are not reseeded automatically.
 
 ## Project layout
 
@@ -109,6 +118,6 @@ backend/   Express API
 database/  PostgreSQL schema and demo seed data
 ```
 
-## Next milestone
+## Final preparation
 
-Phase 8: test the complete demo flow, polish the UI, and prepare the report and presentation. The Phase 7 GitHub webhook still needs a public Jenkins URL to activate.
+The owner-to-admin demo flow was verified on 5 October 2026. See the [final report](docs/FINAL_REPORT.md), [live demo and video guide](docs/DEMO_GUIDE.md), and [presentation slides](docs/Pet-Health-Passport-Presentation.pptx). The local Jenkins build #1 passed. The demo video still needs to be recorded; the Phase 7 GitHub webhook still needs a public Jenkins URL to activate.

@@ -107,7 +107,7 @@ function RecordForm({ type, record, onSave, onCancel }) {
   );
 }
 
-export function HealthRecords({ petId }) {
+export function HealthRecords({ petId, vet = false }) {
   const [type, setType] = useState('vaccinations');
   const [records, setRecords] = useState([]);
   const [status, setStatus] = useState('loading');
@@ -160,20 +160,20 @@ export function HealthRecords({ petId }) {
     setShowForm(false);
     setEditing(null);
     setPendingDelete(null);
-    listHealthRecords(petId, type)
+    listHealthRecords(petId, type, vet)
       .then((items) => { if (active) { setRecords(items); setStatus('ready'); } })
       .catch(() => { if (active) setStatus('error'); });
     return () => { active = false; };
-  }, [petId, type, reload]);
+  }, [petId, type, reload, vet]);
 
   async function refresh() {
-    const items = await listHealthRecords(petId, type);
+    const items = await listHealthRecords(petId, type, vet);
     setRecords(items);
   }
 
   async function save(values) {
     if (editing) await updateHealthRecord(type, editing.id, values);
-    else await createHealthRecord(petId, type, values);
+    else await createHealthRecord(petId, type, values, vet);
     await refresh();
     setShowForm(false);
     setEditing(null);
@@ -196,7 +196,7 @@ export function HealthRecords({ petId }) {
   async function download(record) {
     setError('');
     try {
-      const blob = await downloadHealthDocument(record.id);
+      const blob = await downloadHealthDocument(record.id, vet);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -213,7 +213,7 @@ export function HealthRecords({ petId }) {
     <section className="details-section health-section" aria-labelledby="health-title">
       <div className="section-heading-row">
         <h2 id="health-title">Health records</h2>
-        {status === 'ready' && !showForm && <button className="primary-button" type="button" onClick={() => { setEditing(null); setShowForm(true); }}>Add record</button>}
+        {status === 'ready' && !showForm && (!vet || type === 'medical-records') && <button className="primary-button" type="button" onClick={() => { setEditing(null); setShowForm(true); }}>Add record</button>}
       </div>
       <div className="record-tabs" role="tablist" aria-label="Health record type">
         {Object.entries(titles).map(([key, text]) => (
@@ -238,8 +238,8 @@ export function HealthRecords({ petId }) {
                 <h3>{type === 'weights' ? `${record.weight} kg` : dates.has(primary[type]) ? String(record[primary[type]]).slice(0, 10) : record[primary[type]]}</h3>
                 <div className="record-item-actions">
                   {type === 'documents' ? <button className="text-button" type="button" onClick={() => download(record)}>Download</button> :
-                    <button className="text-button" type="button" onClick={() => { setEditing(record); setShowForm(true); }}>Edit</button>}
-                  <button className="text-button danger-text" type="button" onClick={() => setPendingDelete(record)}>Delete</button>
+                    !vet && <button className="text-button" type="button" onClick={() => { setEditing(record); setShowForm(true); }}>Edit</button>}
+                  {!vet && <button className="text-button danger-text" type="button" onClick={() => setPendingDelete(record)}>Delete</button>}
                 </div>
               </div>
               <dl className="record-details">

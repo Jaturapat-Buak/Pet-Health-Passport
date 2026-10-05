@@ -18,6 +18,7 @@ export function AppShell({ children }) {
           <nav className="app-nav" aria-label="Main navigation">
             <NavLink to={user.role === 'owner' ? '/dashboard' : `/${user.role}/dashboard`}>Dashboard</NavLink>
             {user.role === 'owner' && <NavLink to="/pets">Pets</NavLink>}
+            {user.role === 'vet' && <NavLink to="/vet/pets">Shared pets</NavLink>}
             {user.role === 'owner' && <NavLink to="/appointments">Appointments</NavLink>}
             {user.role === 'owner' && <NavLink to="/reminders">Reminders</NavLink>}
           </nav>

@@ -17,7 +17,7 @@ Pet Health Passport แก้ปัญหานี้ด้วยการทำ
 | Role | หน้าที่หลัก |
 | --- | --- |
 | Pet Owner | สมัครสมาชิก, เข้าสู่ระบบ, จัดการสัตว์เลี้ยงของตัวเอง, เพิ่มข้อมูลสุขภาพ |
-| Veterinarian / Clinic Staff | ดูข้อมูลสุขภาพที่เจ้าของแชร์ และเพิ่มประวัติการรักษาในอนาคต |
+| Veterinarian / Clinic Staff | ดูข้อมูลสุขภาพที่เจ้าของแชร์ และเพิ่มประวัติการรักษา |
 | Admin | ดูภาพรวมระบบ จัดการผู้ใช้ และตรวจสอบข้อมูลในอนาคต |
 
 ## เทคโนโลยีที่ใช้
@@ -151,9 +151,19 @@ http://localhost:5173
 - เพิ่ม Jenkins local setup ผ่าน `docker-compose.jenkins.yml`, `jenkins/Dockerfile` และ `open-jenkins.ps1`
 - เตรียม `githubPush()` และคู่มือ `docs/JENKINS_SETUP.md`; webhook จริงรอ Jenkins URL ที่ GitHub เข้าถึงได้
 
-### Phase 8: Final Preparation (ถัดไป)
+### Phase 8: Final Preparation (กำลังดำเนินการ)
 
-- ทดสอบ demo flow, ปรับ UI และเตรียมรายงาน/สไลด์
+- ทดสอบ demo flow ของ owner และ admin ผ่าน browser แล้ว รวมการเพิ่ม medical visit, appointment และการเกิด reminder
+- ปรับ seed data ให้วันนัดและวันติดตามผลสัมพันธ์กับวันที่สร้างฐานข้อมูลใหม่
+- เตรียมรายงาน `docs/FINAL_REPORT.md`, คู่มือเดโม `docs/DEMO_GUIDE.md` และสไลด์ `docs/Pet-Health-Passport-Presentation.pptx`
+- ยังต้องบันทึกวิดีโอเดโมจริง; GitHub webhook ต้องมี public Jenkins URL
+
+### Phase 9: Veterinarian shared access (เสร็จแล้ว)
+
+- เจ้าของแชร์สัตว์เลี้ยงรายตัวให้บัญชี vet ด้วยอีเมล และเพิกถอนสิทธิ์ได้
+- Vet เห็นเฉพาะสัตว์เลี้ยงที่ถูกแชร์ อ่านประวัติสุขภาพและเอกสารได้ และเพิ่ม medical visit ได้
+- Backend ตรวจสิทธิ์ทุกครั้ง และเก็บ `created_by` ของ medical visit ที่ vet เพิ่ม
+- Backend migration เพิ่มตารางและคอลัมน์ใหม่ให้ PostgreSQL volume เดิมโดยไม่ต้องลบข้อมูล
 
 ## แนวทางแบ่งงานในทีม
 

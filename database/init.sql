@@ -34,6 +34,14 @@ CREATE TABLE pets (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE pet_vet_access (
+  pet_id UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+  vet_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  granted_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (pet_id, vet_id)
+);
+
 CREATE TABLE vaccination_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pet_id UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
@@ -51,6 +59,7 @@ CREATE TABLE vaccination_records (
 CREATE TABLE medical_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pet_id UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
   visit_date DATE NOT NULL,
   clinic_name VARCHAR(160),
   vet_name VARCHAR(160),
@@ -136,6 +145,7 @@ CREATE TABLE reminders (
 );
 
 CREATE INDEX idx_pets_owner_id ON pets(owner_id);
+CREATE INDEX idx_pet_vet_access_vet_id ON pet_vet_access(vet_id);
 CREATE INDEX idx_vaccinations_pet_id ON vaccination_records(pet_id);
 CREATE INDEX idx_medical_records_pet_id ON medical_records(pet_id);
 CREATE INDEX idx_appointments_owner_id_date ON appointments(owner_id, appointment_date);

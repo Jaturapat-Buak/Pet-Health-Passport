@@ -12,8 +12,13 @@ WITH owner_user AS (
   RETURNING id, owner_id
 )
 INSERT INTO vaccination_records (pet_id, vaccine_name, date_received, next_due_date, clinic_name, vet_name, notes)
-SELECT id, 'Rabies Vaccine', '2026-01-15', '2027-01-15', 'Happy Pet Clinic', 'Dr. Vet', 'Annual rabies vaccination.'
+SELECT id, 'Rabies Vaccine', CURRENT_DATE - INTERVAL '8 months', CURRENT_DATE + INTERVAL '4 months', 'Happy Pet Clinic', 'Dr. Vet', 'Annual rabies vaccination.'
 FROM milo;
+
+INSERT INTO pet_vet_access (pet_id, vet_id, granted_by)
+SELECT p.id, v.id, p.owner_id FROM pets p
+JOIN users v ON v.email = 'vet@example.com'
+WHERE p.name = 'Milo';
 
 WITH milo AS (
   SELECT id, owner_id FROM pets WHERE name = 'Milo' LIMIT 1
@@ -25,28 +30,21 @@ FROM milo;
 WITH milo AS (
   SELECT id, owner_id FROM pets WHERE name = 'Milo' LIMIT 1
 )
-INSERT INTO medical_records (pet_id, visit_date, clinic_name, vet_name, symptoms, diagnosis, treatment, follow_up_date)
-SELECT id, '2026-09-20', 'Happy Pet Clinic', 'Dr. Vet', 'Loss of appetite', 'Mild stomach irritation', 'Medication and diet control', '2026-10-05'
+INSERT INTO medical_records (pet_id, created_by, visit_date, clinic_name, vet_name, symptoms, diagnosis, treatment, follow_up_date)
+SELECT id, (SELECT id FROM users WHERE email = 'vet@example.com'), CURRENT_DATE - INTERVAL '15 days', 'Happy Pet Clinic', 'Dr. Vet', 'Loss of appetite', 'Mild stomach irritation', 'Medication and diet control', CURRENT_DATE + INTERVAL '2 days'
 FROM milo;
 
 WITH milo AS (
   SELECT id, owner_id FROM pets WHERE name = 'Milo' LIMIT 1
 )
 INSERT INTO appointments (pet_id, owner_id, appointment_date, clinic_name, purpose, status, notes)
-SELECT id, owner_id, '2026-10-10 10:00:00+07', 'Happy Pet Clinic', 'Follow-up checkup', 'upcoming', 'Bring recent food notes.'
+SELECT id, owner_id, (CURRENT_DATE + INTERVAL '5 days' + INTERVAL '10 hours') AT TIME ZONE 'Asia/Bangkok', 'Happy Pet Clinic', 'Follow-up checkup', 'upcoming', 'Bring recent food notes.'
 FROM milo;
 
 WITH milo AS (
   SELECT id, owner_id FROM pets WHERE name = 'Milo' LIMIT 1
 )
 INSERT INTO weight_records (pet_id, weight, record_date, notes)
-SELECT id, 4.50, '2026-09-20', 'Recorded during clinic visit.'
-FROM milo;
-
-WITH milo AS (
-  SELECT id, owner_id FROM pets WHERE name = 'Milo' LIMIT 1
-)
-INSERT INTO reminders (user_id, pet_id, title, message, reminder_date, type)
-SELECT owner_id, id, 'Milo follow-up', 'Milo has a follow-up checkup at Happy Pet Clinic.', '2026-10-10', 'appointment'
+SELECT id, 4.50, CURRENT_DATE - INTERVAL '15 days', 'Recorded during clinic visit.'
 FROM milo;
 
