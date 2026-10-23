@@ -34,13 +34,13 @@ dashboardRouter.get('/owner', requireRole('owner'), async (request, response) =>
     pool.query(`SELECT activity.pet_id, activity.pet_name, activity.type, activity.title, activity.record_date
       FROM (
         SELECT m.pet_id, p.name AS pet_name, 'medical' AS type,
-          COALESCE(NULLIF(m.diagnosis, ''), 'Medical visit') AS title, m.visit_date AS record_date, m.id
+          COALESCE(NULLIF(m.diagnosis, ''), 'เข้ารับการรักษา') AS title, m.visit_date AS record_date, m.id
         FROM medical_records m JOIN pets p ON p.id = m.pet_id WHERE p.owner_id = $1
         UNION ALL
         SELECT v.pet_id, p.name, 'vaccination', v.vaccine_name, v.date_received, v.id
         FROM vaccination_records v JOIN pets p ON p.id = v.pet_id WHERE p.owner_id = $1
         UNION ALL
-        SELECT w.pet_id, p.name, 'weight', w.weight::text || ' kg', w.record_date, w.id
+        SELECT w.pet_id, p.name, 'weight', w.weight::text || ' กก.', w.record_date, w.id
         FROM weight_records w JOIN pets p ON p.id = w.pet_id WHERE p.owner_id = $1
       ) activity ORDER BY activity.record_date DESC, activity.id DESC LIMIT 8`, [ownerId]),
     pool.query(`SELECT pet_id, pet_name, weight, record_date FROM (
@@ -78,7 +78,7 @@ dashboardRouter.get('/admin', requireRole('admin'), async (_request, response) =
         SELECT 'vaccination', v.vaccine_name, p.name, u.name, v.created_at, v.id
         FROM vaccination_records v JOIN pets p ON p.id = v.pet_id JOIN users u ON u.id = p.owner_id
         UNION ALL
-        SELECT 'medical', COALESCE(NULLIF(m.diagnosis, ''), 'Medical visit'), p.name, u.name, m.created_at, m.id
+        SELECT 'medical', COALESCE(NULLIF(m.diagnosis, ''), 'เข้ารับการรักษา'), p.name, u.name, m.created_at, m.id
         FROM medical_records m JOIN pets p ON p.id = m.pet_id JOIN users u ON u.id = p.owner_id
         UNION ALL
         SELECT 'appointment', a.purpose, p.name, u.name, a.created_at, a.id

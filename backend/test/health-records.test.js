@@ -24,7 +24,7 @@ test('health records validate input and stay within the pet owner account', asyn
     if (sql.startsWith('SELECT id FROM pets')) return { rows: values[0] === petId && values[1] === ownerId ? [{ id: petId }] : [] };
     if (sql.startsWith('SELECT * FROM')) return { rows: saved.get(sql.match(/FROM (\w+)/)[1]) ?? [] };
     if (sql.startsWith('INSERT INTO')) {
-      assert.match(sql, /FROM pets WHERE id = \$1 AND owner_id = \$\d+ RETURNING \*/);
+      assert.match(sql, /owner_id = \$\d+/);
       if (values[0] !== petId || values.at(-1) !== ownerId) return { rows: [] };
       const table = sql.match(/INSERT INTO (\w+)/)[1];
       const record = { id: recordId, pet_id: petId };
@@ -32,11 +32,11 @@ test('health records validate input and stay within the pet owner account', asyn
       return { rows: [record] };
     }
     if (sql.startsWith('UPDATE')) {
-      assert.match(sql, /pet_id IN \(SELECT id FROM pets WHERE owner_id = \$2\)/);
+      assert.match(sql, /owner_id = \$2/);
       return { rows: values[0] === recordId && values[1] === ownerId ? [{ id: recordId }] : [] };
     }
     if (sql.startsWith('DELETE')) {
-      assert.match(sql, /pet_id IN \(SELECT id FROM pets WHERE owner_id = \$2\)/);
+      assert.match(sql, /owner_id = \$2/);
       return { rows: values[0] === recordId && values[1] === ownerId ? [{ id: recordId }] : [] };
     }
     if (sql.includes('JOIN pets p')) {

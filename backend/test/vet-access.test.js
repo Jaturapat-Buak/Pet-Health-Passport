@@ -5,14 +5,14 @@ import { app } from '../src/app.js';
 import { pool } from '../src/config/database.js';
 import { env } from '../src/config/env.js';
 
-test('owners control vet access and revoked vets cannot read or write records', async (context) => {
+test('admins manage assignments, owners only view status, and revoked vets lose record access', async (context) => {
   const originalQuery = pool.query;
-  const ownerId = '5d4cee48-2eae-4bb5-8443-a4938c404cb8';
+  const adminId = '5d4cee48-2eae-4bb5-8443-a4938c404cb8';
   const otherId = '75ba2a93-6228-483b-823c-74a661624abc';
   const vetId = 'fd64ac5b-41eb-4a46-9721-601ddfdf2ac4';
   const petId = '439841f4-d9b8-48c2-8c86-97a82f9833ae';
   const users = new Map([
-    [ownerId, { id: ownerId, role: 'owner', name: 'Owner' }],
+    [adminId, { id: adminId, role: 'admin', name: 'Admin' }],
     [otherId, { id: otherId, role: 'owner', name: 'Other' }],
     [vetId, { id: vetId, role: 'vet', name: 'Vet', email: 'vet@example.com' }]
   ]);
@@ -22,17 +22,17 @@ test('owners control vet access and revoked vets cannot read or write records', 
   pool.query = async (sql, values) => {
     if (sql.includes('FROM users WHERE id')) return { rows: [users.get(values[0])].filter(Boolean) };
     if (sql.startsWith('INSERT INTO pet_vet_access')) {
-      if (values[0] !== petId || values[1] !== ownerId || values[2].toLowerCase() !== 'vet@example.com' || shared) return { rows: [] };
+      if (values[0] !== petId || values[1] !== adminId || values[2].toLowerCase() !== 'vet@example.com' || shared) return { rows: [] };
       shared = true;
       return { rows: [{ vet_id: vetId }] };
     }
     if (sql.startsWith('DELETE FROM pet_vet_access')) {
-      if (values[0] !== petId || values[1] !== ownerId || values[2] !== vetId || !shared) return { rows: [] };
+      if (values[0] !== petId || values[1] !== adminId || values[2] !== vetId || !shared) return { rows: [] };
       shared = false;
       return { rows: [{ vet_id: vetId }] };
     }
     if (sql.includes('FROM pet_vet_access a') && sql.includes('JOIN users u') && sql.includes('JOIN pets p')) {
-      return { rows: shared && values[0] === petId && values[1] === ownerId ? [users.get(vetId)] : [] };
+      return { rows: shared && values[0] === petId && values[1] === adminId ? [users.get(vetId)] : [] };
     }
     if (sql.includes('FROM pet_vet_access a') && sql.includes('JOIN pets p') && sql.includes('WHERE a.vet_id = $1')) {
       return { rows: shared && values[0] === vetId ? [{ id: petId, name: 'Milo' }] : [] };
@@ -70,21 +70,22 @@ test('owners control vet access and revoked vets cannot read or write records', 
   });
 
   assert.equal((await request(`/vet/pets/${petId}`, vetId)).status, 404);
-  assert.equal((await request(`/pets/${petId}/vets`, otherId, 'POST', { email: 'vet@example.com' })).status, 404);
-  assert.equal((await request(`/pets/${petId}/vets`, ownerId, 'POST', { email: 'owner@example.com' })).status, 404);
-  assert.equal((await request(`/pets/${petId}/vets`, ownerId, 'POST', { email: 'vet@example.com' })).status, 201);
-  assert.equal((await request(`/pets/${petId}/vets`, ownerId, 'POST', { email: 'vet@example.com' })).status, 404);
+  assert.equal((await request(`/pets/${petId}/vets/${vetId}`, otherId, 'DELETE')).status, 403);
+  assert.equal((await request(`/pets/${petId}/vets`, otherId, 'POST', { email: 'vet@example.com' })).status, 403);
+  assert.equal((await request(`/pets/${petId}/vets`, adminId, 'POST', { email: 'owner@example.com' })).status, 404);
+  assert.equal((await request(`/pets/${petId}/vets`, adminId, 'POST', { email: 'vet@example.com' })).status, 201);
+  assert.equal((await request(`/pets/${petId}/vets`, adminId, 'POST', { email: 'vet@example.com' })).status, 404);
   assert.equal((await request(`/pets/${petId}/vets`, vetId)).status, 403);
-  assert.equal((await request(`/vet/pets/${petId}`, ownerId)).status, 403);
+  assert.equal((await request(`/vet/pets/${petId}`, adminId)).status, 403);
   assert.equal((await request(`/vet/pets/${petId}`, vetId)).status, 200);
   assert.equal((await request('/vet/pets', vetId)).status, 200);
   assert.equal((await request(`/vet/pets/${petId}/medical-records`, vetId, 'POST', {})).status, 400);
   assert.equal((await request(`/vet/pets/${petId}/medical-records`, vetId, 'POST', { visit_date: '2026-10-05', diagnosis: 'Checkup' })).status, 201);
   const records = await request(`/vet/pets/${petId}/medical-records`, vetId);
   assert.equal((await records.json()).records.length, 1);
-  assert.equal((await request(`/pets/${petId}/vets/${vetId}`, ownerId, 'DELETE')).status, 204);
+  assert.equal((await request(`/pets/${petId}/vets/${vetId}`, adminId, 'DELETE')).status, 204);
   assert.equal((await request(`/vet/pets/${petId}`, vetId)).status, 404);
   assert.equal((await request(`/vet/pets/${petId}/medical-records`, vetId, 'POST', { visit_date: '2026-10-05' })).status, 404);
   assert.equal((await request(`/vet/pets/${petId}/medical-records`, vetId)).status, 404);
-  assert.equal((await request(`/pets/${petId}/vets/${vetId}`, ownerId, 'DELETE')).status, 404);
+  assert.equal((await request(`/pets/${petId}/vets/${vetId}`, adminId, 'DELETE')).status, 404);
 });

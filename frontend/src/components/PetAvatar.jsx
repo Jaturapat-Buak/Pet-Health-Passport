@@ -1,13 +1,15 @@
 import { useState } from 'react';
+import { usePetPhoto } from './usePetPhoto.js';
 
 export function PetAvatar({ pet, className = '' }) {
   const [failedUrl, setFailedUrl] = useState(null);
-  const showImage = pet.image_url && failedUrl !== pet.image_url;
+  const imageUrl = usePetPhoto(pet.image_url);
+  const showImage = imageUrl && failedUrl !== imageUrl;
 
   return (
     <div className={`pet-avatar ${className}`} aria-hidden="true">
       {showImage ? (
-        <img src={pet.image_url} alt="" onError={() => setFailedUrl(pet.image_url)} />
+        <img src={imageUrl} alt="" onError={() => setFailedUrl(imageUrl)} />
       ) : (
         <span>{pet.name?.slice(0, 1).toUpperCase() || 'P'}</span>
       )}

@@ -1,3 +1,4 @@
+import { thaiValue, formatThaiDate } from '../i18n.js';
 import { useEffect, useRef, useState } from 'react';
 import {
   createHealthRecord, deleteHealthRecord, downloadHealthDocument,
@@ -6,62 +7,63 @@ import {
 
 const fields = {
   vaccinations: [
-    ['vaccine_name', 'Vaccine', 'text', true, 160], ['date_received', 'Date received', 'date', true],
-    ['next_due_date', 'Next due', 'date'], ['clinic_name', 'Clinic', 'text', false, 160],
-    ['vet_name', 'Veterinarian', 'text', false, 160], ['notes', 'Notes', 'textarea', false, 5000],
-    ['document_url', 'Certificate URL', 'url', false, 2048]
+    ['vaccine_name', 'วัคซีน', 'text', true, 160], ['date_received', 'วันที่ได้รับวัคซีน', 'date', true],
+    ['next_due_date', 'กำหนดครั้งถัดไป', 'date'], ['clinic_name', 'คลินิก', 'text', false, 160],
+    ['vet_name', 'สัตวแพทย์', 'text', false, 160], ['notes', 'หมายเหตุ', 'textarea', false, 5000],
+    ['document_url', 'ลิงก์ใบรับรอง', 'url', false, 2048]
   ],
   'medical-records': [
-    ['visit_date', 'Visit date', 'date', true], ['clinic_name', 'Clinic', 'text', false, 160],
-    ['vet_name', 'Veterinarian', 'text', false, 160], ['symptoms', 'Symptoms', 'textarea', false, 5000],
-    ['diagnosis', 'Diagnosis', 'textarea', false, 5000], ['treatment', 'Treatment', 'textarea', false, 5000],
-    ['medication', 'Medication', 'textarea', false, 5000], ['follow_up_date', 'Follow-up', 'date'],
-    ['notes', 'Notes', 'textarea', false, 5000]
+    ['visit_date', 'วันที่เข้ารับการรักษา', 'date', true], ['clinic_name', 'คลินิก', 'text', false, 160],
+    ['vet_name', 'สัตวแพทย์', 'text', false, 160], ['symptoms', 'อาการ', 'textarea', false, 5000],
+    ['diagnosis', 'การวินิจฉัย', 'textarea', false, 5000], ['treatment', 'การรักษา', 'textarea', false, 5000],
+    ['medication', 'ยา', 'textarea', false, 5000], ['follow_up_date', 'วันที่นัดติดตามอาการ', 'date'],
+    ['notes', 'หมายเหตุ', 'textarea', false, 5000]
   ],
   allergies: [
-    ['allergy_type', 'Type', 'text', true, 100], ['allergen_name', 'Allergen', 'text', true, 160],
-    ['reaction', 'Reaction', 'textarea', false, 5000],
-    ['severity', 'Severity', 'select', false, null, ['low', 'medium', 'high', 'critical']],
-    ['notes', 'Notes', 'textarea', false, 5000]
+    ['allergy_type', 'ประเภท', 'text', true, 100], ['allergen_name', 'สารก่อภูมิแพ้', 'text', true, 160],
+    ['reaction', 'อาการแพ้', 'textarea', false, 5000],
+    ['severity', 'ความรุนแรง', 'select', false, null, ['low', 'medium', 'high', 'critical']],
+    ['notes', 'หมายเหตุ', 'textarea', false, 5000]
   ],
   medications: [
-    ['medication_name', 'Medication', 'text', true, 160], ['dosage', 'Dosage', 'text', false, 120],
-    ['frequency', 'Frequency', 'text', false, 120], ['start_date', 'Start date', 'date'],
-    ['end_date', 'End date', 'date'], ['instruction', 'Instructions', 'textarea', false, 5000],
-    ['prescribed_by', 'Prescribed by', 'text', false, 160],
-    ['status', 'Status', 'select', false, null, ['active', 'completed', 'cancelled']]
+    ['medication_name', 'ยา', 'text', true, 160], ['dosage', 'ขนาดยา', 'text', false, 120],
+    ['frequency', 'ความถี่ในการใช้ยา', 'text', false, 120], ['start_date', 'วันที่เริ่มใช้ยา', 'date'],
+    ['end_date', 'วันที่สิ้นสุด', 'date'], ['instruction', 'วิธีใช้', 'textarea', false, 5000],
+    ['prescribed_by', 'ผู้สั่งยา', 'text', false, 160],
+    ['status', 'สถานะ', 'select', false, null, ['active', 'completed', 'cancelled']]
   ],
   weights: [
-    ['weight', 'Weight (kg)', 'number', true], ['record_date', 'Recorded on', 'date', true],
-    ['notes', 'Notes', 'textarea', false, 5000]
+    ['weight', 'น้ำหนัก (กก.)', 'number', true], ['record_date', 'วันที่บันทึก', 'date', true],
+    ['notes', 'หมายเหตุ', 'textarea', false, 5000]
   ],
   documents: [
-    ['title', 'Title', 'text', true, 200],
-    ['document_type', 'Type', 'select', true, null, [
+    ['title', 'ชื่อเอกสาร', 'text', true, 200],
+    ['document_type', 'ประเภท', 'select', true, null, [
       'vaccination_certificate', 'medical_certificate', 'lab_result', 'prescription', 'insurance', 'other'
     ]],
-    ['file', 'File (PDF, PNG or JPEG, max 10 MB)', 'file', true]
+    ['file', 'ไฟล์ PDF, PNG หรือ JPEG ขนาดไม่เกิน 10 MB', 'file', true]
   ]
 };
 
 const titles = {
-  vaccinations: 'Vaccinations', 'medical-records': 'Medical visits', allergies: 'Allergies',
-  medications: 'Medications', weights: 'Weight history', documents: 'Documents'
+  vaccinations: 'Vaccinations', 'medical-records': 'Medical Visits', allergies: 'Allergies',
+  medications: 'Medications', weights: 'Weight History', documents: 'Documents'
 };
 const singular = {
-  vaccinations: 'vaccination', 'medical-records': 'medical visit', allergies: 'allergy',
-  medications: 'medication', weights: 'weight', documents: 'document'
+  vaccinations: 'Vaccination', 'medical-records': 'Medical Visit', allergies: 'Allergy',
+  medications: 'Medication', weights: 'Weight', documents: 'Documents'
 };
 const primary = {
   vaccinations: 'vaccine_name', 'medical-records': 'visit_date', allergies: 'allergen_name',
   medications: 'medication_name', weights: 'weight', documents: 'title'
 };
 const dates = new Set(['date_received', 'next_due_date', 'visit_date', 'follow_up_date', 'start_date', 'end_date', 'record_date']);
-const label = (value) => value.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+const label = thaiValue;
 
 function RecordForm({ type, record, onSave, onCancel }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fileName, setFileName] = useState('');
 
   async function submit(event) {
     event.preventDefault();
@@ -72,36 +74,39 @@ function RecordForm({ type, record, onSave, onCancel }) {
     try {
       await onSave(values);
     } catch (requestError) {
-      setError(requestError.response?.data?.error ?? 'Could not save this record. Please try again.');
+      setError(requestError.response?.data?.error ?? 'ไม่สามารถบันทึกประวัติได้ กรุณาลองใหม่อีกครั้ง');
       setSaving(false);
     }
   }
 
   return (
     <form className="record-form" onSubmit={submit}>
-      <h3>{record ? 'Edit record' : `Add ${singular[type]}`}</h3>
+      <h3>{record ? 'Edit Record' : `Add ${singular[type]}`}</h3>
       <div className="form-grid">
-        {fields[type].map(([name, text, kind, required, max, options]) => {
+        {fields[type].map(([name, text, kind, required, max, options]) =>  {
           const value = record?.[name] == null ? '' : dates.has(name) ? String(record[name]).slice(0, 10) : record[name];
           return (
             <label key={name} className={kind === 'textarea' || kind === 'file' ? 'full-width' : ''}>
               {text}
               {kind === 'textarea' ? <textarea name={name} defaultValue={value} maxLength={max} rows="3" /> :
                 kind === 'select' ? <select name={name} defaultValue={value || options[0]}>
-                  {options.map((option) => <option key={option} value={option}>{label(option)}</option>)}
+                  {options.map((option) =>  <option key={option} value={option}>{label(option)}</option>)}
                 </select> :
-                  <input name={name} type={kind} defaultValue={kind === 'file' ? undefined : value}
+                  <><input name={name} type={kind} defaultValue={kind === 'file' ? undefined : value}
+                    className={kind === 'file' ? 'visually-hidden' : undefined}
+                    onChange={kind === 'file' ? (event) => setFileName(event.target.files?.[0]?.name ?? '') : undefined}
                     required={required} maxLength={max} accept={kind === 'file' ? '.pdf,.png,.jpg,.jpeg' : undefined}
                     min={kind === 'number' ? '0.01' : undefined} max={kind === 'number' ? '9999.99' : undefined}
-                    step={kind === 'number' ? '0.01' : undefined} />}
+                    step={kind === 'number' ? '0.01' : undefined} />
+                    {kind === 'file' && <span className="document-file-choice"><span>เลือกไฟล์เอกสาร</span><small>{fileName || 'ยังไม่ได้เลือกไฟล์'}</small></span>}</>}
             </label>
           );
         })}
       </div>
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="record-actions">
-        <button className="primary-button" type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save record'}</button>
-        <button className="secondary-button" type="button" onClick={onCancel} disabled={saving}>Cancel</button>
+        <button className="primary-button" type="submit" disabled={saving}>{saving ? 'กำลังบันทึก...' : 'บันทึกประวัติ'}</button>
+        <button className="secondary-button" type="button" onClick={onCancel} disabled={saving}>ยกเลิก</button>
       </div>
     </form>
   );
@@ -119,7 +124,7 @@ export function HealthRecords({ petId, vet = false }) {
   const [reload, setReload] = useState(0);
   const cancelDeleteButton = useRef(null);
 
-  useEffect(() => {
+  useEffect(() =>  {
     if (!pendingDelete) return;
     const previousFocus = document.activeElement;
     cancelDeleteButton.current?.focus();
@@ -152,7 +157,7 @@ export function HealthRecords({ petId, vet = false }) {
     }
   }
 
-  useEffect(() => {
+  useEffect(() =>  {
     let active = true;
     setStatus('loading');
     setRecords([]);
@@ -161,9 +166,9 @@ export function HealthRecords({ petId, vet = false }) {
     setEditing(null);
     setPendingDelete(null);
     listHealthRecords(petId, type, vet)
-      .then((items) => { if (active) { setRecords(items); setStatus('ready'); } })
-      .catch(() => { if (active) setStatus('error'); });
-    return () => { active = false; };
+      .then((items) =>  { if (active) { setRecords(items); setStatus('ready'); } })
+      .catch(() =>  { if (active) setStatus('error'); });
+    return () =>  { active = false; };
   }, [petId, type, reload, vet]);
 
   async function refresh() {
@@ -187,7 +192,7 @@ export function HealthRecords({ petId, vet = false }) {
       await refresh();
       setPendingDelete(null);
     } catch (requestError) {
-      setError(requestError.response?.data?.error ?? 'Could not delete this record.');
+      setError(requestError.response?.data?.error ?? 'ไม่สามารถลบประวัติได้');
     } finally {
       setBusy(false);
     }
@@ -205,17 +210,17 @@ export function HealthRecords({ petId, vet = false }) {
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      setError('Could not download this document.');
+      setError('ไม่สามารถดาวน์โหลดเอกสารได้');
     }
   }
 
   return (
     <section className="details-section health-section" aria-labelledby="health-title">
       <div className="section-heading-row">
-        <h2 id="health-title">Health records</h2>
-        {status === 'ready' && !showForm && (!vet || type === 'medical-records') && <button className="primary-button" type="button" onClick={() => { setEditing(null); setShowForm(true); }}>Add record</button>}
+        <h2 id="health-title">Health Records</h2>
+        {status === 'ready' && !showForm && (!vet || type === 'medical-records') && <button className="primary-button" type="button" onClick={() =>  { setEditing(null); setShowForm(true); }}>เพิ่มประวัติ</button>}
       </div>
-      <div className="record-tabs" role="tablist" aria-label="Health record type">
+      <div className="record-tabs" role="tablist" aria-label="ประเภทประวัติสุขภาพ">
         {Object.entries(titles).map(([key, text]) => (
           <button key={key} type="button" role="tab" aria-selected={type === key}
             aria-controls="health-record-panel" tabIndex={type === key ? 0 : -1}
@@ -224,28 +229,28 @@ export function HealthRecords({ petId, vet = false }) {
         ))}
       </div>
       <div id="health-record-panel" role="tabpanel" aria-label={titles[type]}>
-      {status === 'loading' && <p className="muted" role="status">Loading records...</p>}
-      {status === 'error' && <div className="inline-error" role="alert">Could not load records. <button className="text-button" type="button" onClick={() => setReload((value) => value + 1)}>Try again</button></div>}
+      {status === 'loading' && <p className="muted" role="status">กำลังโหลดประวัติ...</p>}
+      {status === 'error' && <div className="inline-error" role="alert">ไม่สามารถโหลดประวัติได้ <button className="text-button" type="button" onClick={() => setReload((value) => value + 1)}>ลองใหม่</button></div>}
       {error && <p className="inline-error" role="alert">{error}</p>}
       {showForm && <RecordForm key={`${type}-${editing?.id ?? 'new'}`} type={type} record={editing}
-        onSave={save} onCancel={() => { setShowForm(false); setEditing(null); }} />}
+        onSave={save} onCancel={() =>  { setShowForm(false); setEditing(null); }} />}
       {status === 'ready' && !showForm && (records.length === 0 ?
-        <p className="muted record-empty">No {titles[type].toLowerCase()} recorded yet.</p> :
+        <p className="muted record-empty">ยังไม่มีประวัติในหมวดนี้</p> :
         <div className="record-list">
           {records.map((record) => (
             <article className="record-item" key={record.id}>
               <div className="record-heading">
-                <h3>{type === 'weights' ? `${record.weight} kg` : dates.has(primary[type]) ? String(record[primary[type]]).slice(0, 10) : record[primary[type]]}</h3>
+                <h3>{type === 'weights' ? `${record.weight} กก.` : dates.has(primary[type]) ? formatThaiDate(record[primary[type]]) : record[primary[type]]}</h3>
                 <div className="record-item-actions">
-                  {type === 'documents' ? <button className="text-button" type="button" onClick={() => download(record)}>Download</button> :
-                    !vet && <button className="text-button" type="button" onClick={() => { setEditing(record); setShowForm(true); }}>Edit</button>}
-                  {!vet && <button className="text-button danger-text" type="button" onClick={() => setPendingDelete(record)}>Delete</button>}
+                  {type === 'documents' ? <button className="text-button" type="button" onClick={() => download(record)}>ดาวน์โหลด</button> :
+                    !vet && <button className="text-button" type="button" onClick={() =>  { setEditing(record); setShowForm(true); }}>แก้ไข</button>}
+                  {!vet && <button className="text-button danger-text" type="button" onClick={() => setPendingDelete(record)}>ลบ</button>}
                 </div>
               </div>
               <dl className="record-details">
                 {fields[type].filter(([name]) => name !== primary[type] && name !== 'file' && record[name] != null && record[name] !== '').map(([name, text]) => (
-                  <div key={name}><dt>{text}</dt><dd>{dates.has(name) ? String(record[name]).slice(0, 10) : name === 'document_url' ?
-                    <a href={record[name]} target="_blank" rel="noreferrer">Open certificate</a> :
+                  <div key={name}><dt>{text}</dt><dd>{dates.has(name) ? formatThaiDate(record[name]) : name === 'document_url' ?
+                    <a href={record[name]} target="_blank" rel="noreferrer">เปิดใบรับรอง</a> :
                       ['severity', 'status', 'document_type'].includes(name) ? label(String(record[name])) : String(record[name])}</dd></div>
                 ))}
               </dl>
@@ -256,11 +261,11 @@ export function HealthRecords({ petId, vet = false }) {
       </div>
       {pendingDelete && <div className="modal-backdrop" role="presentation">
         <div className="confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="record-delete-title" aria-describedby="record-delete-description" onKeyDown={handleDeleteDialogKeyDown}>
-          <h2 id="record-delete-title">Delete this record?</h2>
-          <p id="record-delete-description">This action cannot be undone.</p>
+          <h2 id="record-delete-title">ต้องการลบประวัตินี้หรือไม่?</h2>
+          <p id="record-delete-description">เมื่อลบแล้วจะไม่สามารถกู้คืนได้</p>
           <div className="modal-actions">
-            <button className="secondary-button" type="button" ref={cancelDeleteButton} onClick={() => setPendingDelete(null)} disabled={busy}>Cancel</button>
-            <button className="danger-button filled" type="button" onClick={remove} disabled={busy}>{busy ? 'Deleting...' : 'Delete record'}</button>
+            <button className="secondary-button" type="button" ref={cancelDeleteButton} onClick={() => setPendingDelete(null)} disabled={busy}>ยกเลิก</button>
+            <button className="danger-button filled" type="button" onClick={remove} disabled={busy}>{busy ? 'กำลังลบ...' : 'ลบประวัติ'}</button>
           </div>
         </div>
       </div>}

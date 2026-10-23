@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() =>  {
     const handleExpired = () => setUser(null);
     window.addEventListener('pet-session-expired', handleExpired);
     if (!sessionStorage.getItem(tokenKey)) {

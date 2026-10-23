@@ -11,12 +11,12 @@ export async function getPet(id) {
 }
 
 export async function createPet(details) {
-  const { data } = await api.post('/pets', details);
+  const { data } = await api.post('/pets', details, { timeout: 30000 });
   return data.pet;
 }
 
 export async function updatePet(id, details) {
-  const { data } = await api.put(`/pets/${id}`, details);
+  const { data } = await api.put(`/pets/${id}`, details, { timeout: 30000 });
   return data.pet;
 }
 

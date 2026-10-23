@@ -22,6 +22,50 @@ function validId(request, response, next) {
   next();
 }
 
+function ownerEmail(value) {
+  return typeof value === 'string' && value.trim().length <= 255 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) ? value.trim().toLowerCase() : null;
+}
+
+vetRouter.get('/available-pets', async (request, response) => {
+  const email = request.query.ownerEmail == null ? null : ownerEmail(request.query.ownerEmail);
+  const search = request.query.search ?? '';
+  const page = Number(request.query.page ?? 0);
+  if ((request.query.ownerEmail != null && !email) || typeof search !== 'string' || search.length > 120 ||
+      !Number.isInteger(page) || page < 0 || page > 100000)
+    return response.status(400).json({ error: 'กรุณาระบุคำค้นหาและหน้ารายการให้ถูกต้อง' });
+  const speciesSearch = new Map([['แมว', 'cat'], ['สุนัข', 'dog'], ['หมา', 'dog'], ['นก', 'bird'], ['กระต่าย', 'rabbit'], ['ปลา', 'fish']]).get(search.trim()) ?? search.trim();
+  const { rows } = await pool.query(
+    `SELECT p.id, p.name, p.species, p.breed, u.name AS owner_name,
+       EXISTS (SELECT 1 FROM pet_vet_access a WHERE a.pet_id = p.id AND a.vet_id = $2) AS in_care
+     FROM pets p JOIN users u ON u.id = p.owner_id
+     WHERE ($1::text IS NULL OR LOWER(u.email) = $1)
+       AND (p.name ILIKE '%' || $3 || '%' OR u.name ILIKE '%' || $3 || '%' OR p.species ILIKE '%' || $3 || '%' OR p.species ILIKE '%' || $5 || '%')
+     ORDER BY p.name, p.id LIMIT 21 OFFSET $4`,
+    [email, request.user.id, search.trim(), page * 20, speciesSearch]);
+  response.json({ pets: rows.slice(0, 20), has_more: rows.length > 20, page });
+});
+
+vetRouter.post('/pets/:id/access', validId, async (request, response) => {
+  const email = request.body?.owner_email == null ? null : ownerEmail(request.body.owner_email);
+  if (request.body?.owner_email != null && !email) return response.status(400).json({ error: 'กรุณาระบุอีเมลเจ้าของสัตว์เลี้ยงให้ถูกต้อง' });
+  const { rows } = await pool.query(
+    `INSERT INTO pet_vet_access (pet_id, vet_id, granted_by)
+     SELECT p.id, $2, $2 FROM pets p JOIN users u ON u.id = p.owner_id
+     WHERE p.id = $1 AND ($3::text IS NULL OR LOWER(u.email) = $3)
+     ON CONFLICT (pet_id, vet_id) DO NOTHING RETURNING pet_id, vet_id`,
+    [request.params.id, request.user.id, email]);
+  if (!rows[0]) return response.status(409).json({ error: 'ไม่พบสัตว์เลี้ยงของอีเมลนี้ หรืออยู่ในความดูแลแล้ว' });
+  response.status(201).json({ access: rows[0] });
+});
+
+vetRouter.delete('/pets/:id/access', validId, async (request, response) => {
+  const { rows } = await pool.query(
+    'DELETE FROM pet_vet_access WHERE pet_id = $1 AND vet_id = $2 RETURNING pet_id',
+    [request.params.id, request.user.id]);
+  if (!rows[0]) return response.status(404).json({ error: 'ไม่พบสัตว์เลี้ยงในความดูแล' });
+  response.sendStatus(204);
+});
+
 vetRouter.get('/pets', async (request, response) => {
   const { rows } = await pool.query(
     `SELECT p.id, p.name, p.species, p.breed, p.image_url, u.name AS owner_name

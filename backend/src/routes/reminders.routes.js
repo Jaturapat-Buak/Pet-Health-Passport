@@ -19,10 +19,10 @@ function reminderId(source) {
 
 function describe(source) {
   const { type, pet_name: pet, label } = source;
-  if (type === 'appointment') return { title: 'Appointment', message: `${pet}: ${label}` };
-  if (type === 'vaccination') return { title: 'Vaccination due', message: `${label} for ${pet} is due soon.` };
-  if (type === 'medication') return { title: 'Medication ending', message: `${label} for ${pet} is ending soon.` };
-  return { title: 'Follow-up due', message: `${pet} has a follow-up visit due soon.` };
+  if (type === 'appointment') return { title: 'นัดหมาย', message: `${pet}: ${label}` };
+  if (type === 'vaccination') return { title: 'วัคซีนใกล้ถึงกำหนด', message: `${pet}: ${label} ใกล้ถึงกำหนดฉีดวัคซีน` };
+  if (type === 'medication') return { title: 'ยาใกล้ครบกำหนด', message: `${pet}: ${label} ใกล้ครบกำหนดใช้ยา` };
+  return { title: 'ใกล้ถึงกำหนดติดตามอาการ', message: `${pet} ใกล้ถึงกำหนดเข้ารับการติดตามอาการ` };
 }
 
 export async function currentReminders(ownerId) {
@@ -51,7 +51,7 @@ export async function currentReminders(ownerId) {
   const reminders = rows.map((source) => ({
     id: reminderId(source), pet_id: source.pet_id, pet_name: source.pet_name,
     type: source.type, reminder_date: source.reminder_date, event_at: source.event_at,
-    target_url: source.type === 'appointment' ? `/appointments/${source.source_id}/edit` : `/pets/${source.pet_id}`,
+    target_url: source.type === 'appointment' ? '/appointments' : `/pets/${source.pet_id}`,
     ...describe(source), is_read: false
   }));
   if (reminders.length === 0) return reminders;

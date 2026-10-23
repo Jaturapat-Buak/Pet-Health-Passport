@@ -6,7 +6,7 @@ import { requireAuth, requireRole } from '../middlewares/auth.js';
 import { readDocumentFile, removeDocumentFile, saveDocumentFile } from '../services/document-files.js';
 
 export const healthRecordsRouter = Router();
-healthRecordsRouter.use(requireAuth, requireRole('owner'));
+healthRecordsRouter.use(requireAuth, requireRole('owner', 'admin'));
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const textField = (max, required = false) => ({ type: 'text', max, required });
@@ -112,7 +112,7 @@ function validIdentifier(value, response) {
 }
 
 async function ownsPet(petId, ownerId) {
-  const { rows } = await pool.query('SELECT id FROM pets WHERE id = $1 AND owner_id = $2', [petId, ownerId]);
+  const { rows } = await pool.query(`SELECT id FROM pets WHERE id = $1 AND (owner_id = $2 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $2 AND actor.role = 'admin'))`, [petId, ownerId]);
   return Boolean(rows[0]);
 }
 
@@ -138,7 +138,7 @@ healthRecordsRouter.post('/pets/:petId/:resource', async (request, response, nex
   const placeholders = columns.map((_, index) => `$${index + 2}`).join(', ');
   const { rows } = await pool.query(
     `INSERT INTO ${resource.table} (pet_id, ${columns.join(', ')})
-     SELECT id, ${placeholders} FROM pets WHERE id = $1 AND owner_id = $${columns.length + 2} RETURNING *`,
+     SELECT id, ${placeholders} FROM pets WHERE id = $1 AND (owner_id = $${columns.length + 2} OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $${columns.length + 2} AND actor.role = 'admin')) RETURNING *`,
     [request.params.petId, ...Object.values(record), request.user.id]
   );
   if (!rows[0]) return response.status(404).json({ error: 'Pet not found' });
@@ -149,7 +149,7 @@ healthRecordsRouter.get('/:resource/:id', async (request, response) => {
   const resource = resourceFor(request, response);
   if (!resource || !validIdentifier(request.params.id, response)) return;
   const { rows } = await pool.query(
-    `SELECT r.* FROM ${resource.table} r JOIN pets p ON p.id = r.pet_id WHERE r.id = $1 AND p.owner_id = $2`,
+    `SELECT r.* FROM ${resource.table} r JOIN pets p ON p.id = r.pet_id WHERE r.id = $1 AND (p.owner_id = $2 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $2 AND actor.role = 'admin'))`,
     [request.params.id, request.user.id]
   );
   if (!rows[0]) return response.status(404).json({ error: 'Record not found' });
@@ -166,7 +166,7 @@ healthRecordsRouter.put('/:resource/:id', async (request, response) => {
   const timestamp = resource.table === 'weight_records' ? '' : ', updated_at = NOW()';
   const { rows } = await pool.query(
     `UPDATE ${resource.table} SET ${updates}${timestamp}
-     WHERE id = $1 AND pet_id IN (SELECT id FROM pets WHERE owner_id = $2) RETURNING *`,
+     WHERE id = $1 AND pet_id IN (SELECT id FROM pets WHERE (owner_id = $2 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $2 AND actor.role = 'admin'))) RETURNING *`,
     [request.params.id, request.user.id, ...Object.values(record)]
   );
   if (!rows[0]) return response.status(404).json({ error: 'Record not found' });
@@ -178,7 +178,7 @@ healthRecordsRouter.delete('/:resource/:id', async (request, response, next) => 
   const resource = resourceFor(request, response);
   if (!resource || !validIdentifier(request.params.id, response)) return;
   const { rows } = await pool.query(
-    `DELETE FROM ${resource.table} WHERE id = $1 AND pet_id IN (SELECT id FROM pets WHERE owner_id = $2) RETURNING id`,
+    `DELETE FROM ${resource.table} WHERE id = $1 AND pet_id IN (SELECT id FROM pets WHERE (owner_id = $2 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $2 AND actor.role = 'admin'))) RETURNING id`,
     [request.params.id, request.user.id]
   );
   if (!rows[0]) return response.status(404).json({ error: 'Record not found' });
@@ -214,7 +214,7 @@ healthRecordsRouter.post('/pets/:petId/documents', upload.single('file'), async 
   try {
     const { rows } = await pool.query(
       `INSERT INTO documents (id, pet_id, document_type, title, file_url, uploaded_by)
-       SELECT $1, id, $2, $3, $4, $5 FROM pets WHERE id = $6 AND owner_id = $5 RETURNING *`,
+       SELECT $1, id, $2, $3, $4, $5 FROM pets WHERE id = $6 AND (owner_id = $5 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $5 AND actor.role = 'admin')) RETURNING *`,
       [id, type, title.trim(), `/api/documents/${id}/file`, request.user.id, request.params.petId]
     );
     if (!rows[0]) {
@@ -230,7 +230,7 @@ healthRecordsRouter.post('/pets/:petId/documents', upload.single('file'), async 
 
 async function ownDocument(id, ownerId) {
   const { rows } = await pool.query(
-    'SELECT d.* FROM documents d JOIN pets p ON p.id = d.pet_id WHERE d.id = $1 AND p.owner_id = $2',
+    `SELECT d.* FROM documents d JOIN pets p ON p.id = d.pet_id WHERE d.id = $1 AND (p.owner_id = $2 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $2 AND actor.role = 'admin'))`,
     [id, ownerId]
   );
   return rows[0];
@@ -254,7 +254,7 @@ healthRecordsRouter.get('/documents/:id/file', async (request, response) => {
 healthRecordsRouter.delete('/documents/:id', async (request, response) => {
   if (!validIdentifier(request.params.id, response)) return;
   const { rows } = await pool.query(
-    'DELETE FROM documents WHERE id = $1 AND pet_id IN (SELECT id FROM pets WHERE owner_id = $2) RETURNING id',
+    `DELETE FROM documents WHERE id = $1 AND pet_id IN (SELECT id FROM pets WHERE (owner_id = $2 OR EXISTS (SELECT 1 FROM users actor WHERE actor.id = $2 AND actor.role = 'admin'))) RETURNING id`,
     [request.params.id, request.user.id]
   );
   if (!rows[0]) return response.status(404).json({ error: 'Document not found' });

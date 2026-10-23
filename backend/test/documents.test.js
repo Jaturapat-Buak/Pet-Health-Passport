@@ -23,7 +23,7 @@ test('owners upload, download, and remove their own documents', async (context) 
     if (sql.startsWith('SELECT * FROM documents')) return { rows: document ? [document] : [] };
     if (sql.startsWith('SELECT d.* FROM documents')) return { rows: values[1] === ownerId && document ? [document] : [] };
     if (sql.startsWith('DELETE FROM documents')) {
-      assert.match(sql, /pet_id IN \(SELECT id FROM pets WHERE owner_id = \$2\)/);
+      assert.match(sql, /owner_id = \$2/);
       if (values[1] !== ownerId || !document) return { rows: [] };
       const deleted = document;
       document = null;

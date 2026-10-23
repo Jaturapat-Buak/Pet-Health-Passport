@@ -22,3 +22,21 @@ export async function grantPetVet(id, email) {
 export async function revokePetVet(id, vetId) {
   await api.delete(`/pets/${id}/vets/${vetId}`);
 }
+
+export async function findPetsForCare(ownerEmail) {
+  const { data } = await api.get('/vet/available-pets', { params: { ownerEmail } });
+  return data.pets;
+}
+
+export async function takePetIntoCare(id, ownerEmail) {
+  await api.post(`/vet/pets/${id}/access`, { owner_email: ownerEmail });
+}
+
+export async function listCareCandidates(search = '', page = 0) {
+  const { data } = await api.get('/vet/available-pets', { params: { search, page } });
+  return data;
+}
+
+export async function endPetCare(id) {
+  await api.delete(`/vet/pets/${id}/access`);
+}

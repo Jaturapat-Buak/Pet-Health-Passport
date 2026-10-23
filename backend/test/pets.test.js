@@ -7,6 +7,8 @@ import { env } from '../src/config/env.js';
 
 test('owners can manage only their own pets', async (context) => {
   const originalQuery = pool.query;
+  const originalConnect = pool.connect;
+  pool.connect = async () => ({ query: (...args) => pool.query(...args), release() {} });
   const ownerId = '5d4cee48-2eae-4bb5-8443-a4938c404cb8';
   const otherId = '75ba2a93-6228-483b-823c-74a661624abc';
   const vetId = 'fd64ac5b-41eb-4a46-9721-601ddfdf2ac4';
@@ -22,14 +24,16 @@ test('owners can manage only their own pets', async (context) => {
   ]);
 
   pool.query = async (sql, values) => {
+    if (['BEGIN', 'COMMIT', 'ROLLBACK'].includes(sql)) return { rows: [] };
+    if (sql.startsWith('SELECT owner_id, image_url FROM pets')) return { rows: pets.has(values[0]) ? [pets.get(values[0])] : [] };
     if (sql.includes('FROM users WHERE id')) {
       return { rows: users.has(values[0]) ? [users.get(values[0])] : [] };
     }
-    if (sql.startsWith('SELECT') && sql.includes('FROM pets WHERE owner_id')) {
+    if (sql.startsWith('SELECT') && sql.includes('FROM pets WHERE (owner_id')) {
       return { rows: [...pets.values()].filter((pet) => pet.owner_id === values[0]) };
     }
     if (sql.startsWith('SELECT') && sql.includes('FROM pets WHERE id')) {
-      assert.match(sql, /WHERE id = \$1 AND owner_id = \$2/);
+      assert.match(sql, /owner_id = \$2/);
       const pet = pets.get(values[0]);
       return { rows: pet?.owner_id === values[1] ? [pet] : [] };
     }
@@ -45,7 +49,7 @@ test('owners can manage only their own pets', async (context) => {
       return { rows: [pet] };
     }
     if (sql.startsWith('UPDATE pets')) {
-      assert.match(sql, /WHERE id = \$1 AND owner_id = \$2/);
+      assert.match(sql, /owner_id = \$2/);
       const pet = pets.get(values[0]);
       if (pet?.owner_id !== values[1]) return { rows: [] };
       const updated = { ...pet, name: values[2], species: values[3], weight: values[8] };
@@ -53,7 +57,7 @@ test('owners can manage only their own pets', async (context) => {
       return { rows: [updated] };
     }
     if (sql.startsWith('DELETE FROM pets')) {
-      assert.match(sql, /WHERE id = \$1 AND owner_id = \$2/);
+      assert.match(sql, /owner_id = \$2/);
       const pet = pets.get(values[0]);
       if (pet?.owner_id !== values[1]) return { rows: [] };
       pets.delete(values[0]);
@@ -70,6 +74,7 @@ test('owners can manage only their own pets', async (context) => {
   const base = `http://127.0.0.1:${server.address().port}/api/pets`;
   context.after(async () => {
     pool.query = originalQuery;
+    pool.connect = originalConnect;
     await new Promise((resolve) => server.close(resolve));
   });
 

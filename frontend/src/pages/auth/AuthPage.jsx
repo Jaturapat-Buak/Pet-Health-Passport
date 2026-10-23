@@ -9,7 +9,7 @@ export function AuthPage({ mode }) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (loading) return <div className="page-loading" role="status">Loading your account...</div>;
+  if (loading) return <div className="page-loading" role="status">กำลังโหลดบัญชีของคุณ...</div>;
   if (user) return <Navigate to={homeForRole(user.role)} replace />;
 
   async function handleSubmit(event) {
@@ -24,7 +24,7 @@ export function AuthPage({ mode }) {
         : await signIn(data.get('email'), data.get('password'));
       navigate(homeForRole(nextUser.role), { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.error ?? 'Could not connect to the server. Please try again.');
+      setError(requestError.response?.data?.error ?? 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
     } finally {
       setSubmitting(false);
     }
@@ -32,49 +32,52 @@ export function AuthPage({ mode }) {
 
   return (
     <main className="auth-layout">
+      <header className="auth-header">
+        <Link to="/login" className="auth-header-brand">
+          <span className="auth-header-icon" aria-hidden="true">P</span>
+          <span>Pet Health Passport</span>
+        </Link>
+      </header>
+      <div className="auth-card">
       <section className="auth-intro">
-        <Link className="brand" to="/">Pet Health Passport</Link>
         <div className="auth-intro-copy">
-          <p className="eyebrow">Care in one place</p>
           <h1>Pet Health Passport</h1>
-          <p>Every detail matters to the people who care for your pet.</p>
+          <p>ดูแลทุกเรื่องสุขภาพของเพื่อนตัวน้อย<br />บันทึกและติดตามได้ในที่เดียว</p>
         </div>
-        <span className="auth-mark" aria-hidden="true">P / H</span>
       </section>
 
       <section className="auth-form-section">
         <div className="auth-form-wrap">
-          <p className="eyebrow">{isRegister ? 'Create an account' : 'Welcome back'}</p>
-          <h2>{isRegister ? 'Join Pet Health Passport' : 'Sign in to your account'}</h2>
-          <p className="form-subtitle">{isRegister ? 'Start with your details.' : 'Enter your details to continue.'}</p>
+          <h2>{isRegister ? 'Create an account' : 'Sign in'}</h2>
 
           <form onSubmit={handleSubmit}>
             {isRegister && (
               <label>
-                Name
-                <input name="name" autoComplete="name" maxLength="120" required />
+                ชื่อผู้ใช้งาน
+                <input name="name" placeholder="ชื่อของคุณ" autoComplete="name" maxLength="120" required />
               </label>
             )}
             <label>
-              Email
-              <input name="email" type="email" autoComplete="email" maxLength="255" required />
+              อีเมล
+              <input name="email" type="email" placeholder="เช่น name@example.com" autoComplete="email" maxLength="255" required />
             </label>
             <label>
-              Password
-              <input name="password" type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} minLength={isRegister ? 8 : undefined} required />
+              รหัสผ่าน
+              <input name="password" type="password" placeholder={isRegister ? 'อย่างน้อย 8 ตัวอักษร' : 'กรอกรหัสผ่านของคุณ'} autoComplete={isRegister ? 'new-password' : 'current-password'} minLength={isRegister ? 8 : undefined} required />
             </label>
             {error && <p className="form-error" role="alert">{error}</p>}
             <button className="primary-button" type="submit" disabled={submitting}>
-              {submitting ? 'Please wait...' : isRegister ? 'Create account' : 'Sign in'}
+              {submitting ? 'กรุณารอสักครู่...' : isRegister ? 'สร้างบัญชี' : 'เข้าสู่ระบบ'}
             </button>
           </form>
 
-          <p className="auth-switch">
-            {isRegister ? 'Already have an account?' : 'New to Pet Health Passport?'}{' '}
-            <Link to={isRegister ? '/login' : '/register'}>{isRegister ? 'Sign in' : 'Create an account'}</Link>
-          </p>
+          <Link className="auth-switch" to={isRegister ? '/login' : '/register'}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M21 21v-3a6 6 0 0 0-3-5.2" /></svg>
+            {isRegister ? 'มีบัญชีแล้ว? เข้าสู่ระบบ' : 'ยังไม่มีบัญชี? สมัครสมาชิก'}
+          </Link>
         </div>
       </section>
+      </div>
     </main>
   );
 }
