@@ -75,11 +75,26 @@ $clusters = @(& $kindExe get clusters)
 if ($LASTEXITCODE -ne 0) { throw 'Could not list kind clusters.' }
 if ($clusters -notcontains $clusterName) {
   Invoke-Checked $kindExe @('create', 'cluster', '--name', $clusterName, '--config', (Join-Path $k8sDir 'kind-config.yaml'), '--wait', '180s')
+} else {
+  $nodeName = "$clusterName-control-plane"
+  $running = & docker inspect --format '{{.State.Running}}' $nodeName
+  if ($LASTEXITCODE -ne 0) { throw "Could not inspect kind node $nodeName." }
+  if ($running -ne 'true') {
+    Write-Host "Starting existing kind node $nodeName..."
+    Invoke-Checked 'docker' @('start', $nodeName)
+  }
+  $ready = $false
+  for ($attempt = 0; $attempt -lt 60; $attempt++) {
+    & kubectl --context $context get --raw=/readyz 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+    Start-Sleep -Seconds 2
+  }
+  if (-not $ready) { throw 'The existing kind control plane did not become ready.' }
 }
 
 if (-not $SkipBuild) {
   Invoke-Checked 'docker' @('build', '-t', 'pet-health-passport-postgres:kind', 'database')
-  $imageTag = 'kind-' + (Get-Date -Format 'yyyyMMddHHmmss')
+  $imageTag = 'kind-' + [DateTime]::UtcNow.ToString('yyyyMMddHHmmss', [Globalization.CultureInfo]::InvariantCulture)
   Invoke-Checked 'docker' @('build', '-t', 'pet-health-passport-backend:kind', '-t', "pet-health-passport-backend:$imageTag", 'backend')
   Invoke-Checked 'docker' @('build', '-t', 'pet-health-passport-frontend:kind', '-t', "pet-health-passport-frontend:$imageTag", 'frontend')
 } else {

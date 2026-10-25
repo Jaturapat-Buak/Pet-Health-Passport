@@ -1,41 +1,44 @@
 # คู่มือศึกษาและนำเสนอ Pet Health Passport
 
-เอกสารนี้อธิบายระบบตามโค้ดใน repository ณ 22 ตุลาคม 2026 ใช้เตรียมเดโม อธิบายสถาปัตยกรรม และตอบคำถามหลังนำเสนอ โดยแยกความสามารถที่มีจริงออกจากแนวคิดใน `PROJECT_PLAN.md` ข้อมูลจำนวนผู้ใช้/สัตว์เลี้ยงและสถานะเซิร์ฟเวอร์ในวันนำเสนออาจเปลี่ยนได้ ต้องตรวจสดก่อนเริ่ม
+เอกสารนี้อธิบายระบบตามโค้ดใน repository ณ 25 ตุลาคม 2026 หลังรวม UI/สิทธิ์บทบาทเวอร์ชันใหม่ ใช้เตรียมเดโม อธิบายสถาปัตยกรรม และตอบคำถามหลังนำเสนอ โดยแยกความสามารถที่มีจริงออกจากแนวคิดใน `PROJECT_PLAN.md` ข้อมูลจำนวนผู้ใช้/สัตว์เลี้ยงและสถานะเซิร์ฟเวอร์ในวันนำเสนออาจเปลี่ยนได้ ต้องตรวจสดก่อนเริ่ม
 
 ## 1. สรุปโครงการใน 30 วินาที
 
-Pet Health Passport เป็นเว็บแอปเก็บข้อมูลสุขภาพสัตว์เลี้ยงในที่เดียว เจ้าของจัดการโปรไฟล์ ประวัติวัคซีน การรักษา อาการแพ้ ยา น้ำหนัก เอกสาร และนัดหมายได้ ระบบคำนวณแจ้งเตือนจากวันที่ในข้อมูลเหล่านั้น สัตวแพทย์เห็นเฉพาะสัตว์ที่เจ้าของอนุญาตและเพิ่มบันทึกการรักษาได้ ส่วนผู้ดูแลระบบเห็นสถิติและกิจกรรมภาพรวม โครงการมี Docker Compose, Jenkins และตัวเลือก Kubernetes แบบ local สำหรับสาธิตการ build/deploy
+Pet Health Passport เป็นเว็บแอปเก็บข้อมูลสุขภาพสัตว์เลี้ยงในที่เดียว เจ้าของจัดการโปรไฟล์ รูป ประวัติวัคซีน การรักษา อาการแพ้ ยา น้ำหนัก และเอกสาร พร้อมดูนัดหมาย/แจ้งเตือน สัตวแพทย์ค้นหาและรับสัตว์เข้าดูแล จัดนัด และเพิ่มบันทึกการรักษาได้ ส่วนผู้ดูแลระบบจัดการผู้ใช้ สิทธิ์ สัตว์เลี้ยง และดูภาพรวม โครงการมี Docker Compose, Jenkins และตัวเลือก Kubernetes แบบ local สำหรับสาธิตการ build/deploy
 
-**ประโยคหลักสำหรับนำเสนอ:** "เจ้าของไม่ต้องตามหาประวัติสุขภาพจากหลายที่ และสามารถแชร์ข้อมูลที่จำเป็นให้สัตวแพทย์เป็นรายตัว โดยควบคุมสิทธิ์เอง"
+**ประโยคหลักสำหรับนำเสนอ:** "เจ้าของเห็นสุขภาพสัตว์เลี้ยงในที่เดียว สัตวแพทย์จัดการการดูแลและนัดหมายตามสิทธิ์ ส่วนผู้ดูแลระบบดูแลบัญชีและข้อมูลภาพรวม"
 
 ## 2. ขอบเขตและสถานะ
 
 | เรื่อง | สถานะจริง |
 | --- | --- |
-| ฟีเจอร์หลัก owner, vet, admin dashboard | มีในเว็บและ API |
+| ฟีเจอร์ owner, vet, admin รวมการจัดการผู้ใช้/การดูแล | มีในเว็บและ API; UI/role policy ใหม่ผ่านการทดสอบของเพื่อนเมื่อ 23 ตุลาคม 2026 |
 | Docker Compose และ Jenkins target `compose` | เคยผ่าน Jenkins build #1 ตามรายงานวันที่ 5 ตุลาคม 2026 |
-| Kubernetes local ด้วย kind | เคย deploy และตรวจหน้าเว็บ/API สำเร็จวันที่ 19 ตุลาคม 2026 |
+| Kubernetes local ด้วย kind | Deploy UI/backend ที่รวมล่าสุดและตรวจหน้าเว็บ/API สำเร็จวันที่ 25 ตุลาคม 2026; PostgreSQL/uploads PVC เดิมยัง Bound |
 | Jenkins target `kind` | มีโค้ดและทดสอบสคริปต์จากคอนเทนเนอร์แล้ว แต่ยังไม่มีหลักฐานว่า Pipeline job จริงรัน target นี้สำเร็จ |
 | GitHub push webhook | เตรียม trigger ใน Jenkinsfile แต่ยังต้องมี Jenkins URL สาธารณะและตั้งค่า webhook |
 | วิดีโอเดโม | ยังไม่ได้บันทึกตามเอกสารเดิม |
 
-การทดสอบข้างต้นเป็นผล ณ วันที่ระบุ ไม่ใช่การรับรองว่า Docker, Jenkins หรือ Kubernetes กำลังทำงานอยู่ในขณะที่เปิดเอกสารนี้ ตรวจสถานะสดตามหัวข้อ 12 ก่อนนำเสนอ
+การทดสอบข้างต้นเป็นผล ณ วันที่ระบุ ไม่ใช่การรับรองว่า Docker, Jenkins หรือ Kubernetes กำลังทำงานอยู่ในขณะที่เปิดเอกสารนี้ ตรวจสถานะสดตามหัวข้อ 12 ก่อนนำเสนอ. Backend tests ล่าสุดผ่าน 9 รายการ โดย integration test ที่ต้องมีฐานข้อมูลทดสอบแยกถูกข้าม; frontend production build ผ่านใน Docker
 
 ## 3. ผู้ใช้และสิทธิ์
 
 | ความสามารถ | Guest | Owner | Vet | Admin |
 | --- | :---: | :---: | :---: | :---: |
 | สมัครบัญชี owner / เข้าสู่ระบบ | ได้ | ได้ | ได้ | ได้ |
-| ดูและแก้สัตว์เลี้ยงของตน | - | ได้ | - | - |
-| จัดการประวัติสุขภาพและเอกสารของตน | - | ได้ | - | - |
-| สร้าง/แก้/เปลี่ยนสถานะนัดหมาย | - | ได้ | - | - |
+| ดูและแก้สัตว์เลี้ยงของตน | - | ได้ | - | ได้ทุกตัว |
+| จัดการประวัติสุขภาพและเอกสารของตน | - | ได้ | - | ได้ทุกตัว |
+| ดูนัดหมายที่เข้าถึงได้ | - | ได้ | ได้ | ได้ |
+| สร้าง/แก้/เปลี่ยนสถานะนัดหมาย | - | - | เฉพาะสัตว์ในความดูแล | ได้ทุกตัว |
 | ดูและทำเครื่องหมายแจ้งเตือนว่าอ่านแล้ว | - | ได้ | - | - |
-| ให้/ถอนสิทธิ์ vet รายตัว | - | ได้ | - | - |
-| ดูสัตว์ที่ได้รับการแชร์และดาวน์โหลดเอกสาร | - | - | ได้ | - |
-| เพิ่มบันทึกการรักษาให้สัตว์ที่ได้รับการแชร์ | - | - | ได้ | - |
+| ดูรายชื่อ vet ที่ดูแลสัตว์ของตน | - | ได้ | - | ได้ |
+| ค้นหา/รับสัตว์เข้าดูแลและยุติการดูแล | - | - | ได้ด้วยตนเอง | จัดสิทธิ์ให้/ถอนให้ vet ได้ |
+| ดูประวัติ/ดาวน์โหลดเอกสารของสัตว์ในความดูแล | - | - | ได้ | ได้ทุกตัว |
+| เพิ่มบันทึกการรักษาให้สัตว์ในความดูแล | - | - | ได้ | จัดการประวัติได้ทุกตัว |
 | ดูสถิติรวมและกิจกรรมล่าสุด | - | - | - | ได้ |
+| สร้าง/แก้ role/ลบผู้ใช้ | - | - | - | ได้ (ยกเว้นลบ/ลดสิทธิ์ตัวเอง) |
 
-การสมัครจากหน้าเว็บสร้างบัญชี `owner` เท่านั้น บัญชี `vet` และ `admin` ในการเดโมมาจาก seed data; เว็บยังไม่มีเครื่องมือสร้างหรือจัดการบัญชีสองบทบาทนี้เอง การซ่อนเมนูใน frontend เป็นเรื่องความสะดวก แต่การบังคับสิทธิ์จริงอยู่ที่ API ซึ่งตรวจ JWT, role และความเป็นเจ้าของ/สิทธิ์แชร์ในฐานข้อมูลทุกครั้ง
+การสมัครจากหน้าเว็บสร้างบัญชี `owner` เท่านั้น บัญชี `vet` และ `admin` ในการเดโมมาจาก seed data หรือให้ admin สร้างผ่านหน้า Users. การซ่อนเมนูใน frontend เป็นเรื่องความสะดวก แต่การบังคับสิทธิ์จริงอยู่ที่ API ซึ่งตรวจ JWT, role และขอบเขตความเป็นเจ้าของ/การดูแลในฐานข้อมูลทุกครั้ง
 
 ## 4. ภาพรวมสถาปัตยกรรมและการไหลของข้อมูล
 
@@ -46,8 +49,8 @@ Browser (React + React Router + Axios)
 Vite proxy (development) / Nginx (Compose) / Traefik Ingress (kind)
   | /api
   v
-Express API (auth + validation + owner/vet access checks)
-  | SQL แบบ parameterized       | ไฟล์เอกสาร
+Express API (auth + validation + role/owner/care checks)
+  | SQL แบบ parameterized       | รูปสัตว์ + ไฟล์เอกสาร
   v                            v
 PostgreSQL                    uploads volume/PVC
 ```
@@ -55,8 +58,8 @@ PostgreSQL                    uploads volume/PVC
 1. React เลือกหน้าตาม URL และบทบาทผู้ใช้ผ่าน `ProtectedRoute`.
 2. หลัง login/register API ส่งข้อมูลผู้ใช้กับ JWT ที่มีอายุ 12 ชั่วโมง Browser เก็บ token ใน `sessionStorage` (ปิด session แล้วหาย ไม่ใช่ cookie หรือ localStorage).
 3. Axios ส่ง `Authorization: Bearer <token>` กับคำขอ `/api` ทุกครั้ง; เมื่อเจอ `401` จะลบ token และให้กลับหน้า login.
-4. Express ตรวจลายเซ็นและวันหมดอายุของ JWT แล้วอ่านบัญชีล่าสุดจากตาราง `users` ก่อนตรวจ role. จากนั้น route ที่เกี่ยวกับสัตว์เลี้ยงตรวจ owner หรือแถวใน `pet_vet_access` เพิ่มอีกชั้น.
-5. PostgreSQL เก็บข้อมูลเชิงโครงสร้าง ส่วนไฟล์ PDF/รูปเอกสารเก็บเป็นไฟล์ใน volume/PVC โดยฐานข้อมูลเก็บ metadata และ URL ดาวน์โหลด.
+4. Express ตรวจลายเซ็นและวันหมดอายุของ JWT แล้วอ่านบัญชีล่าสุดจากตาราง `users` ก่อนตรวจ role. จากนั้น route ที่เกี่ยวกับสัตว์เลี้ยงตรวจ owner, แถวใน `pet_vet_access` หรือสิทธิ์ admin เพิ่มอีกชั้น.
+5. PostgreSQL เก็บข้อมูลเชิงโครงสร้าง ส่วนรูปสัตว์และไฟล์เอกสารเก็บเป็นไฟล์ใน volume/PVC โดยฐานข้อมูลเก็บ URL/metadata.
 6. หน้าแดชบอร์ดและแจ้งเตือนเรียก API ที่ query ข้อมูลจริง ไม่ได้ฝังตัวเลขตัวอย่างใน frontend.
 
 ไฟล์อ้างอิง: [App routes](../frontend/src/App.jsx), [AuthContext](../frontend/src/auth/AuthContext.jsx), [API client](../frontend/src/api/client.js), [Express app](../backend/src/app.js), [auth middleware](../backend/src/middlewares/auth.js)
@@ -66,7 +69,7 @@ PostgreSQL                    uploads volume/PVC
 ### 5.1 ส่วนกลาง: navigation และ session
 
 - เส้นทาง `/` ไม่ใช่ landing page แยก; ระบบส่งต่อไป `/dashboard` และหากยังไม่ล็อกอินจะไป `/login`.
-- แถบบนแสดงชื่อแอป, เมนูตาม role, ชื่อผู้ใช้ และ **Sign out**. Owner เห็น Dashboard, Pets, Appointments, Reminders; vet เห็น Dashboard, Shared pets; admin เห็น Dashboard เท่านั้น.
+- แถบบนแสดงชื่อแอป, เมนูตาม role, ชื่อผู้ใช้ และปุ่มออกจากระบบ. Owner เห็น Dashboard, Pets, Appointments, Reminders; vet เห็น Dashboard, Pets in Your Care, Appointments; admin เห็น Dashboard, Users, Pets, Appointments. UI ใช้หัวข้อภาษาอังกฤษกับ label/ข้อความไทย และแสดงวันที่แบบไทย พ.ศ.
 - หน้าข้อมูลมีสถานะ loading/empty/error ตามแต่ละหน้า ข้อผิดพลาดจาก API บางฟอร์มแสดงเหนือปุ่มบันทึก.
 - บัญชีคนละ role เข้า URL ของอีก role ไม่ได้; frontend ส่งกลับหน้าแรกของ role นั้น และ API ปฏิเสธคำขอที่ไม่มีสิทธิ์ด้วย `403`.
 
@@ -86,7 +89,7 @@ PostgreSQL                    uploads volume/PVC
 
 - การ์ดตัวเลข: **Your pets**, **Upcoming visits**, **Vaccines due in 30 days**, **Active medications**. ตัวเลขบางรายการเป็นลิงก์ไปหน้าที่เกี่ยวข้อง.
 - **Upcoming reminders:** แสดงแจ้งเตือนที่ยังไม่อ่านสูงสุด 5 รายการ พร้อมลิงก์ไปนัดหมายหรือสัตว์เลี้ยง.
-- **Upcoming appointments:** นัดที่ยังเป็น `upcoming` และเวลาไม่ผ่านไปแล้ว สูงสุด 5 รายการ; คลิกเพื่อแก้ไข.
+- **Upcoming appointments:** นัดที่ยังเป็น `upcoming` และเวลาไม่ผ่านไปแล้ว สูงสุด 5 รายการ; เปิดหน้ารายการเพื่อตรวจรายละเอียดได้ แต่ owner แก้นัดไม่ได้.
 - **Vaccinations due soon:** วัคซีนครบกำหนดภายใน 30 วัน สูงสุด 5 รายการ.
 - **Active medications:** ยาที่ status เป็น `active` สูงสุด 5 รายการ; การนับ active ไม่ได้บังคับว่าต้องอยู่ระหว่าง start/end date.
 - **Recent health records:** วัคซีน การรักษา และน้ำหนักล่าสุดรวมกันสูงสุด 8 รายการ.
@@ -96,19 +99,20 @@ PostgreSQL                    uploads volume/PVC
 ### 5.4 Owner: `/pets`, `/pets/new`, `/pets/:id/edit`
 
 - `/pets` แสดงรายการสัตว์ของเจ้าของที่ล็อกอินเท่านั้น แต่ละการ์ดเปิดรายละเอียด; **Add pet** เปิดฟอร์มใหม่.
-- ฟอร์มสัตว์เลี้ยงรับชื่อและ species (บังคับ), breed, gender, วันเกิด, สี, น้ำหนัก, microchip ID, **Photo URL** และ medical notes. Photo URL เป็นลิงก์รูปภายนอก **ไม่ใช่การอัปโหลดไฟล์รูปโปรไฟล์**.
-- **Create pet/Save changes** บันทึกแล้วไปหน้ารายละเอียด. API ปฏิเสธวันเกิดอนาคต, น้ำหนักไม่เป็นบวก/เกินช่วง, URL ที่ไม่ใช่ HTTP(S), และ microchip ID ที่ซ้ำ.
+- ฟอร์มสัตว์เลี้ยงรับชื่อและ species (บังคับ), breed, gender, วันเกิด, สี, น้ำหนัก, microchip ID, รูปสัตว์ และ medical notes. เลือกไฟล์ JPG/PNG/WebP ไม่เกิน 5 MB แล้วเห็นตัวอย่างก่อนบันทึก; ใช้ **นำรูปออก** เพื่อลบรูปเดิม.
+- **Create pet/Save changes** ส่งข้อมูลและรูปแบบ multipart แล้วไปหน้ารายละเอียด. API ปฏิเสธวันเกิดอนาคต, น้ำหนักไม่เป็นบวก/เกินช่วง, microchip ID ที่ซ้ำ และไฟล์รูปที่ไม่ผ่านการตรวจชนิด/ขนาด.
+- Admin ใช้หน้าเดียวกันจัดการสัตว์ทุกตัว และเลือก/เปลี่ยนเจ้าของจากบัญชี owner ได้.
 - **Back to pets/Back to profile** ย้อนกลับโดยไม่บันทึก.
 
 ### 5.5 Owner: `/pets/:id` (Health Passport)
 
-- หัวหน้าแสดงภาพ ชื่อ species/breed; **Schedule visit** เปิดฟอร์มนัดหมายโดยเลือกสัตว์ตัวนี้ไว้; **Edit profile** แก้ข้อมูลพื้นฐาน.
+- หัวหน้าแสดงภาพ ชื่อ species/breed และ **Edit profile**; เฉพาะ admin มีปุ่ม **สร้างนัดหมาย** โดยเลือกสัตว์ตัวนี้ไว้.
 - **Details** แสดง species, breed, gender, birth date, color, weight, microchip ID. **Medical notes** เป็นโน้ตทั่วไปของโปรไฟล์ ไม่ใช่รายการ medical visit.
 - **Health records** มี 6 แท็บ: Vaccinations, Medical visits, Allergies, Medications, Weight history, Documents. เปลี่ยนแท็บแล้วโหลดข้อมูลของประเภทนั้น; มีปุ่ม Retry เมื่อโหลดไม่สำเร็จ.
 - Owner ใช้ **Add record**, **Edit** (ยกเว้นเอกสาร), **Delete** ได้ในแท็บที่เลือก. การลบมีหน้าต่างยืนยัน; ลบแล้วกู้ผ่าน UI ไม่ได้.
 - แท็บ Documents ใช้ **Download** เพื่อดาวน์โหลดผ่าน API ที่ตรวจสิทธิ์ ไม่ใช่เปิด URL ไฟล์สาธารณะ. เอกสารเพิ่ม/ดาวน์โหลด/ลบได้ แต่ยังไม่มีฟอร์มแก้ไขเอกสารเดิม.
-- **Veterinarian access:** กรอกอีเมลบัญชี vet ที่มีอยู่แล้ว กด **Share access**; รายชื่อผู้มีสิทธิ์แสดงด้านล่าง; **Remove access** ถอนสิทธิ์ทันที คำขอ vet หลังจากนั้นจะไม่เห็นสัตว์ตัวนี้.
-- **Delete profile:** ต้องยืนยันอีกครั้ง; ลบสัตว์และข้อมูลที่อ้างถึงผ่าน foreign key cascade และลบไฟล์เอกสารที่แนบไว้ด้วย ใช้ระวังในเดโม.
+- **Veterinarian access:** Owner เห็นรายชื่อสัตวแพทย์ที่กำลังดูแลแบบอ่านอย่างเดียว; admin สามารถเพิ่ม/ถอนสิทธิ์ให้ vet โดยใช้อีเมล. Vet เองรับหรือยุติการดูแลจากหน้า vet ได้.
+- **Delete profile:** ต้องยืนยันอีกครั้ง; ลบสัตว์และข้อมูลที่อ้างถึงผ่าน foreign key cascade และลบไฟล์เอกสารกับรูปที่แนบไว้ด้วย ใช้ระวังในเดโม.
 
 #### รายละเอียดแต่ละแท็บประวัติสุขภาพ
 
@@ -123,13 +127,13 @@ PostgreSQL                    uploads volume/PVC
 
 API ตรวจความสัมพันธ์ของวันที่: วัคซีนครั้งถัดไปต้องไม่ก่อนวันที่รับ, follow-up ต้องไม่ก่อนวันที่ตรวจ, วันสิ้นสุดยาต้องไม่ก่อนวันเริ่ม ชนิดข้อมูลและขอบเขตตัวเลขถูกตรวจซ้ำที่ backend ไม่พึ่ง validation ของ browser อย่างเดียว
 
-### 5.6 Owner: `/appointments`, `/appointments/new`, `/appointments/:id/edit`
+### 5.6 นัดหมาย: `/appointments`, `/appointments/new`, `/appointments/:id/edit`
 
 - หน้า **Appointments** มีสวิตช์ **Upcoming** (สถานะ upcoming และเวลายังไม่ผ่าน) กับ **All appointments** (รวมอดีต/completed/cancelled).
-- **New appointment** เปิดฟอร์มเลือกสัตว์ วันที่และเวลา purpose (บังคับ), clinic และ notes. ต้องมีโปรไฟล์สัตว์ก่อนจึงสร้างได้. Browser แปลงเวลาท้องถิ่นเป็น ISO/UTC ก่อนส่ง; backend เก็บ `TIMESTAMPTZ`.
-- **Edit** เปลี่ยนข้อมูลนัด; dropdown **Status** เปลี่ยนระหว่าง `upcoming`, `completed`, `cancelled` โดยไม่ต้องเข้าฟอร์มแก้. นัดที่เปลี่ยนเป็น completed/cancelled จะหายจากมุมมอง Upcoming แต่ยังอยู่ All appointments.
-- **Delete** มีหน้าต่างยืนยัน. การยกเลิกนัดด้วย status `cancelled` ต่างจากการลบรายการทิ้ง.
-- Vet ยังไม่มีสิทธิ์สร้างหรือแก้นัด แม้แผนเดิมเคยเสนอให้ทำได้.
+- Owner เห็นนัดของสัตว์ตนเองแบบอ่านอย่างเดียว ไม่มีปุ่มสร้าง/แก้/เปลี่ยนสถานะ/ลบ.
+- Vet สร้างและจัดการนัดได้เฉพาะสัตว์ที่กำลังดูแล; admin จัดการได้ทุกตัว. **New appointment** เปิดฟอร์มเลือกสัตว์ วันที่และเวลา purpose (บังคับ), clinic และ notes. Browser แปลงเวลาท้องถิ่นเป็น ISO/UTC ก่อนส่ง; backend เก็บ `TIMESTAMPTZ`.
+- **Edit** เปลี่ยนข้อมูลนัด; dropdown **Status** เปลี่ยนระหว่าง `upcoming`, `completed`, `cancelled`. นัด completed/cancelled หายจาก Upcoming แต่ยังอยู่ All appointments.
+- **Delete** มีหน้าต่างยืนยัน. การยกเลิกด้วย status `cancelled` ต่างจากการลบรายการทิ้ง.
 
 ### 5.7 Owner: `/reminders`
 
@@ -141,17 +145,18 @@ API ตรวจความสัมพันธ์ของวันที่:
 
 ### 5.8 Vet: `/vet/dashboard`, `/vet/pets`, `/vet/pets/:id`
 
-- Dashboard ทักทาย แสดงสัตว์ที่ถูกแชร์สูงสุด 3 ตัวและข้อมูลบัญชี. **View all** เปิดรายการ Shared pets ทั้งหมด.
-- รายการ Shared pets แสดงชื่อ สายพันธุ์และชื่อ owner เฉพาะสัตว์ที่มีแถวอนุญาตใน `pet_vet_access`.
-- หน้า Shared health passport แสดงโปรไฟล์และ 6 แท็บประวัติ. Vet **อ่านและดาวน์โหลดเอกสาร** ได้; ปุ่ม **Add record** มีเฉพาะแท็บ Medical visits.
-- เมื่อ vet เพิ่ม medical visit ระบบบันทึก `created_by` เป็นบัญชี vet และเติมชื่อ vet จากบัญชีถ้าไม่ได้กรอก. Vet **แก้/ลบประวัติเดิม, จัดการสัตว์, แชร์ต่อ, จัดการนัดหมาย** ไม่ได้.
-- หาก owner ถอนสิทธิ์ การอ่านครั้งถัดไปจะได้ 404/ไม่พบสัตว์. การซ่อนการ์ดอย่างเดียวไม่ใช่หลักประกัน: SQL ของ API ตรวจสิทธิ์แชร์ในคำขออ่าน/เขียนทุกครั้ง.
+- Dashboard แสดงสัตว์ที่กำลังดูแลและทางไปหน้ารายการ; หน้ารายการมี **Pet Directory & Appointments** สำหรับค้นหาชื่อสัตว์ ชื่อเจ้าของ หรือชนิดสัตว์ แบบแบ่งหน้าละ 20 รายการ.
+- ปุ่ม **รับเข้าดูแล** สร้างสิทธิ์ใน `pet_vet_access`; **รับดูแลและนัดหมาย** รับเคสแล้วเปิดฟอร์มนัดทันที. สัตว์ที่รับแล้วเปิดประวัติหรือสร้างนัดได้ และ vet ยุติการดูแลของตนได้.
+- หน้า health passport ของ vet แสดงโปรไฟล์และ 6 แท็บประวัติ. Vet อ่าน/ดาวน์โหลดเอกสารและเพิ่ม Medical visits ได้ แต่แก้/ลบประวัติเดิมหรือโปรไฟล์สัตว์ไม่ได้.
+- เมื่อเพิ่ม medical visit ระบบบันทึก `created_by` เป็นบัญชี vet และเติมชื่อ vet จากบัญชีถ้าไม่ได้กรอก. การอ่านประวัติ รูป ไฟล์ และการจัดการนัดตรวจสิทธิ์การดูแลที่ API; เมื่อสิทธิ์ถูกถอน การเข้าถึงครั้งถัดไปถูกปฏิเสธ.
 
-### 5.9 Admin: `/admin/dashboard`
+### 5.9 Admin: `/admin/dashboard`, `/admin/users`, `/pets`, `/appointments`
 
 - การ์ดตัวเลขรวมทุกบัญชี: Users, Pets, Vaccinations, Appointments.
 - รายการล่าสุด: ผู้ใช้ 5 คน, สัตว์ 5 ตัว, กิจกรรม 8 รายการ (สร้างสัตว์, วัคซีน, medical visit, นัดหมาย).
-- เป็นหน้า **ดูข้อมูล** เท่านั้น ไม่มีปุ่มสร้าง/แก้/ลบผู้ใช้หรือเปิดข้อมูลสุขภาพรายตัว. ตัวเลข appointment คือจำนวนรายการทั้งหมด ไม่ใช่เฉพาะ upcoming.
+- **Users:** ค้นหาบัญชี, เพิ่มผู้ใช้ (ชื่อ อีเมล รหัสผ่าน role), แก้ชื่อ/อีเมล/role และลบผู้ใช้. Admin ลบหรือลดสิทธิ์ admin ของตัวเองไม่ได้.
+- **Pets:** ดูและแก้สัตว์ทุกตัว, ระบุ/เปลี่ยน owner, จัดการข้อมูลสุขภาพและสิทธิ์ vet. **Appointments:** สร้าง/แก้/เปลี่ยนสถานะ/ลบนัดทุกตัว.
+- ตัวเลข appointment บน dashboard คือจำนวนรายการทั้งหมด ไม่ใช่เฉพาะ upcoming.
 
 ## 6. API ที่สำคัญ
 
@@ -162,15 +167,17 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | Health | `GET /health` ตรวจ API + DB; เส้นทางเต็มคือ `/api/health` |
 | Auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me` |
 | Pets | `GET/POST /pets`, `GET/PUT/DELETE /pets/:id` |
-| Owner-vet access | `GET/POST /pets/:id/vets`, `DELETE /pets/:id/vets/:vetId` |
+| Vet access | `GET/POST /pets/:id/vets`, `DELETE /pets/:id/vets/:vetId` (POST/DELETE สำหรับ admin); vet ใช้ `POST/DELETE /vet/pets/:id/access` กับสิทธิ์ตนเอง |
 | Health records | `GET/POST /pets/:petId/:resource`, `GET/PUT/DELETE /:resource/:id` สำหรับ `vaccinations`, `medical-records`, `allergies`, `medications`, `weights` |
 | Documents | `GET/POST /pets/:petId/documents`, `GET /documents/:id/file`, `DELETE /documents/:id` |
+| Pet photos | `GET /pet-photos/:id` คืนไฟล์ภาพหลังตรวจ JWT และสิทธิ์เข้าถึงสัตว์; อัปโหลด/ลบรูปผ่าน `POST/PUT /pets` |
 | Appointments | `GET/POST /appointments`, `GET/PUT/DELETE /appointments/:id`, `PATCH /appointments/:id/status`; list ใช้ `?view=upcoming` หรือ `?view=all` |
 | Reminders | `GET /reminders`, `PATCH /reminders/:id/read` |
 | Dashboards | `GET /dashboard/owner`, `GET /dashboard/admin` |
-| Vet | `GET /vet/pets`, `GET /vet/pets/:id`, `GET /vet/pets/:id/:resource`, `POST /vet/pets/:id/medical-records`, `GET /vet/documents/:id/file` |
+| Vet | `GET /vet/available-pets`, `GET /vet/pets`, `GET /vet/pets/:id`, `GET /vet/pets/:id/:resource`, `POST /vet/pets/:id/medical-records`, `GET /vet/documents/:id/file` |
+| Admin users | `GET/POST /admin/users`, `PUT/DELETE /admin/users/:id` |
 
-ตัวอย่างการทำงานเมื่อ owner กด **Share access**: frontend เรียก `POST /api/pets/:id/vets` พร้อมอีเมล -> API ตรวจ JWT และ role owner -> SQL ตรวจว่าสัตว์เป็นของ owner และอีเมลเป็นบัญชี role vet -> เพิ่มแถวใน `pet_vet_access` -> หน้าเว็บโหลดรายชื่อ vet ใหม่
+ตัวอย่างการทำงานเมื่อ vet กด **รับเข้าดูแล**: frontend เรียก `POST /api/vet/pets/:id/access` -> API ตรวจ JWT และ role vet -> SQL เพิ่มแถว `(pet_id, vet_id)` ใน `pet_vet_access` -> หน้าเว็บแสดงสถานะอยู่ในความดูแลและเปิดทางไปประวัติ/นัดหมาย. Admin จัดสิทธิ์ผ่าน endpoint `/pets/:id/vets` ได้เช่นกัน
 
 ## 7. โครงสร้างข้อมูลและกฎธุรกิจ
 
@@ -188,7 +195,7 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | `documents` | metadata ของไฟล์ | ผูก `pet_id`; `file_url` ชี้ endpoint ที่ต้อง auth |
 | `reminders` | สถานะอ่านของเหตุการณ์ | ผูก user/pet; เนื้อหารายการปัจจุบันคำนวณจากตารางต้นทาง |
 
-ตารางและ enum หลักสร้างจาก [database/init.sql](../database/init.sql). ฐานข้อมูลใหม่โหลด [seed.sql](../database/seed.sql) ครั้งแรกเมื่อ volume ยังว่าง; volume เดิมไม่ถูก reseed อัตโนมัติ. Backend รัน [migration](../backend/src/config/migrate.js) ตอนเริ่มเพื่อเพิ่มส่วน `pet_vet_access`/`created_by` ในฐานข้อมูลเก่าโดยไม่ต้องลบ volume. Foreign key หลายตารางใช้ `ON DELETE CASCADE` เมื่อสัตว์ถูกลบ; ไฟล์เอกสารต้องลบจาก storage แยกโดยโค้ด
+ตารางและ enum หลักสร้างจาก [database/init.sql](../database/init.sql). ฐานข้อมูลใหม่โหลด [seed.sql](../database/seed.sql) ครั้งแรกเมื่อ volume ยังว่าง; volume เดิมไม่ถูก reseed อัตโนมัติ. Backend รัน [migration](../backend/src/config/migrate.js) ตอนเริ่มเพื่อเพิ่มส่วน `pet_vet_access`/`created_by` ในฐานข้อมูลเก่าโดยไม่ต้องลบ volume. Foreign key หลายตารางใช้ `ON DELETE CASCADE` เมื่อสัตว์ถูกลบ; backend ต้องลบไฟล์เอกสารและรูปจาก storage แยก. รูปเก็บ path ใน `pets.image_url` ไม่ได้เก็บ bytes ในฐานข้อมูล
 
 ## 8. เครื่องมือพัฒนาและ deploy: ใช้อะไร ทำหน้าที่อะไร
 
@@ -203,7 +210,7 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | Express | รับ HTTP, แยก routes, ตรวจสิทธิ์/ข้อมูล | `backend/src/app.js`, `backend/src/routes/` |
 | PostgreSQL + `pg` | จัดเก็บข้อมูลสัมพันธ์ด้วย SQL parameterized | `database/init.sql`, `backend/src/config/database.js` |
 | bcrypt/JWT | hash รหัสผ่านและระบุตัวตน | `backend/src/routes/auth.routes.js` |
-| Multer | รับเอกสาร multipart พร้อมจำกัด 10 MB | `backend/src/routes/health-records.routes.js` |
+| Multer | รับเอกสาร multipart สูงสุด 10 MB และรูปสัตว์สูงสุด 5 MB | `backend/src/routes/health-records.routes.js`, `backend/src/routes/pets.routes.js` |
 | Docker Compose | รัน frontend, backend, PostgreSQL พร้อม volume และ health check บนเครื่องเดียว | `docker-compose.yml`; เว็บ `http://localhost:5173` |
 | Nginx | เสิร์ฟไฟล์ React build, ส่ง `/api` ไป backend ใน Compose | `frontend/nginx.conf` |
 | Jenkins | pipeline checkout -> `npm ci` -> test -> frontend build -> build image -> deploy -> health check | `Jenkinsfile`; UI `http://localhost:8080` เมื่อรันอยู่ |
@@ -239,17 +246,16 @@ Kubernetes นี้เป็นคลัสเตอร์หนึ่ง node 
 - **JWT:** 12 ชั่วโมง, HS256, ตรวจ account ใน DB ทุก request; `sessionStorage` ลดการค้างข้าม browser session แต่ยังต้องระวัง XSS. Logout ตอนนี้ลบ token ฝั่ง browser ไม่ได้ revoke token กลางทาง.
 - **รหัสผ่าน:** เก็บ bcrypt hash ไม่เก็บ plaintext; seed/demo password มีไว้เฉพาะ local demo และต้องเปลี่ยนก่อนเปิด public.
 - **SQL:** ใช้ parameter binding สำหรับค่าจากผู้ใช้. ชื่อตารางที่ต่อใน query เลือกจาก allowlist ของชนิด record ไม่ได้ต่อ string ตาม input ตรง ๆ.
-- **เอกสาร:** ตรวจขนาดและลายเซ็นไฟล์ PDF/PNG/JPEG, ไฟล์เก็บเป็น UUID, ดาวน์โหลดผ่าน endpoint ที่ตรวจสิทธิ์. URL รูปโปรไฟล์และ Certificate URL เป็นลิงก์ภายนอก จึงไม่อยู่ในระบบ upload นี้.
+- **ไฟล์:** เอกสาร PDF/PNG/JPEG สูงสุด 10 MB และรูปสัตว์ JPG/PNG/WebP สูงสุด 5 MB ตรวจชนิดไฟล์ก่อนบันทึกใน uploads volume/PVC. การอ่านทั้งเอกสารและรูปผ่าน endpoint ที่ตรวจสิทธิ์; Certificate URL ของวัคซีนยังเป็นลิงก์ภายนอก.
 - **Secret:** `.env` ถูก ignore ใน Git; Jenkins เก็บใน Credentials; K8s สร้าง Secret จากไฟล์ local. Kubernetes Secret เป็นกลไกจัดการค่า config ไม่ใช่ระบบ encryption/secret management ระดับ production โดยตัวมันเอง.
 - **CORS:** backend กำหนด origin ตาม environment; local Compose และ kind ใช้ origin คนละพอร์ต.
 - **การลบ:** UI ขอ confirm ก่อนลบสัตว์/record/นัด; DB cascade ช่วยลบแถวที่ผูกกัน แต่ต้องสำรองข้อมูลหากต้องการกู้คืน.
 
 ## 10. สิ่งที่ยังไม่มี: ห้ามเผลอพูดว่าทำแล้ว
 
-- Admin ยัง **ไม่** จัดการผู้ใช้/role หรือแก้ข้อมูลทุกคนผ่านหน้าเว็บ; มีเพียง dashboard สถิติ.
-- ยังไม่มี QR code, public/shareable passport link, search/filter รวม, health status badge ที่คำนวณอัตโนมัติ, ระบบ email/LINE/push, calendar view, แอปมือถือ หรือเชื่อมระบบคลินิกจริง.
-- Vet ยังแก้/ลบบันทึกเดิม สร้างนัด และเพิ่มชนิด record อื่นไม่ได้.
-- รูปโปรไฟล์สัตว์กรอก URL ไม่ใช่อัปโหลด; Certificate URL ใน vaccination ไม่ใช่ document upload.
+- ยังไม่มี QR code, public/shareable passport link, health status badge ที่คำนวณอัตโนมัติ, ระบบ email/LINE/push, calendar view, แอปมือถือ หรือเชื่อมระบบคลินิกจริง. มีการค้นหาสัตว์ใน vet directory และผู้ใช้ใน admin แล้ว แต่ยังไม่ใช่ search/filter ทุกข้อมูล.
+- Vet ยังแก้/ลบบันทึกสุขภาพเดิมหรือเพิ่มชนิด record อื่นนอกจาก medical visit ไม่ได้; การจัดนัดหมายทำได้แล้ว.
+- Certificate URL ใน vaccination เป็นลิงก์ ไม่ใช่ document upload; รูปสัตว์อัปโหลดไฟล์ได้แล้ว.
 - คลัสเตอร์ kind และ Compose เป็น local demo ไม่ใช่ระบบ production ที่มี TLS, backup/restore อัตโนมัติ, shared object storage หรือหลาย node.
 - ข้อมูล/บัญชี demo ไม่ควรเปิดสู่สาธารณะ. หากต้องใช้จริงต้องทบทวนความปลอดภัย สิทธิ์เข้าถึงไฟล์ การสำรองข้อมูล และการจัดการ secret เพิ่ม.
 
@@ -261,10 +267,10 @@ Kubernetes นี้เป็นคลัสเตอร์หนึ่ง node 
 | 0:40 | เปิด Owner dashboard | ตัวเลข, นัด, แจ้งเตือน, กราฟมาจาก DB จริง |
 | 1:25 | เปิด Pets -> Milo -> สลับ 6 แท็บ | Passport รวมข้อมูลสุขภาพหลายชนิดในตัวเดียว |
 | 2:20 | เพิ่ม medical visit พร้อม follow-up date | บันทึกแล้วเกิดข้อมูลสำหรับ reminder ใน 30 วัน |
-| 3:00 | Schedule visit -> สร้างนัด -> กลับ Appointments | แก้/status/cancel ต่างจากลบรายการ |
+| 3:00 | เปิด Appointments ใน owner | เจ้าของเห็นนัดของสัตว์ตนเอง แต่เปลี่ยนเองไม่ได้ |
 | 3:40 | Reminders -> Mark read | Reminder คำนวณจากวันใน record และเก็บสถานะอ่าน |
-| 4:20 | ดู Veterinarian access -> login vet -> Shared pets | เจ้าของอนุญาตรายตัว; vet อ่านและเพิ่ม medical visit แต่แก้เดิมไม่ได้ |
-| 5:20 | login admin -> dashboard | เห็นสถิติรวม ไม่ใช่หน้าจัดการผู้ใช้ |
+| 4:20 | ดู Veterinarian access -> login vet -> ค้นหาและรับสัตว์เข้าดูแล -> สร้างนัด | Vet รับเคสเองได้และจัดนัดเฉพาะสัตว์ที่ดูแล; ยังแก้ประวัติเดิมไม่ได้ |
+| 5:20 | login admin -> dashboard -> Users | เห็นสถิติรวมและจัดการบัญชี/role ได้; อย่าแก้บัญชีจริงระหว่างเดโม |
 | 6:00 | แสดง Jenkins stages และ/หรือ `kubectl get pods` | เชื่อมโค้ด -> test/build -> deploy -> health check; ย้ำผลจริงที่แสดงบนจอ |
 
 ใช้ข้อมูล demo จาก [README](../README.md) และ [DEMO_GUIDE](DEMO_GUIDE.md) แต่ตรวจวันนัดก่อนโชว์: seed ใช้วันสัมพันธ์กับวันที่สร้างฐานข้อมูลครั้งแรก ส่วน volume เก่าคงข้อมูลและวันที่เดิมอยู่. หลีกเลี่ยงโชว์ `.env`, Jenkins credentials หรือข้อมูลส่วนตัว. ถ้า demo บน kind ข้อมูลอาจไม่เหมือน Compose เพราะเป็นคนละฐานข้อมูล
@@ -286,18 +292,18 @@ curl.exe http://localhost:5173/api/health
 curl.exe http://localhost:8081/api/health
 ```
 
-ใช้ URL ที่กำลังรันจริงเท่านั้น: frontend Compose `http://localhost:5173`, kind `http://localhost:8081`, Jenkins `http://localhost:8080`. ผล `GET /api/health` ที่ดีมี `status: ok` และ `database: connected`. ตรวจ Jenkins build number/result ใน UI ก่อนอ้างว่า CI ผ่านล่าสุด; ผลวันที่ 5/19 ตุลาคมเป็นหลักฐานย้อนหลัง
+ใช้ URL ที่กำลังรันจริงเท่านั้น: frontend Compose `http://localhost:5173`, kind `http://localhost:8081`, Jenkins `http://localhost:8080`. ผล `GET /api/health` ที่ดีมี `status: ok` และ `database: connected`. ตรวจ Jenkins build number/result ใน UI ก่อนอ้างว่า CI ผ่านล่าสุด; ผล Jenkins วันที่ 5 ตุลาคมเป็นหลักฐานย้อนหลัง ส่วน kind ตรวจใหม่วันที่ 25 ตุลาคม
 
 ## 13. คำถามที่อาจถูกถาม พร้อมคำตอบสั้น
 
 **Q: ทำไมต้องมี 3 role?**  
-A: Owner จัดการข้อมูลของตัวเอง, vet เห็นเฉพาะที่แชร์และเพิ่มการรักษา, admin ดูภาพรวม แต่ละ role จำกัดทั้งเมนูและ API
+A: Owner จัดการข้อมูลสัตว์และดูนัดของตัวเอง, vet รับสัตว์เข้าดูแลแล้วจัดนัด/เพิ่มการรักษา, admin จัดการบัญชีและข้อมูลทุกตัว แต่ละ role จำกัดทั้งเมนูและ API
 
 **Q: ถ้าเดา pet ID ของคนอื่นได้ จะอ่านข้อมูลได้ไหม?**  
 A: ไม่ได้ route ของ owner query พร้อม `owner_id`; route ของ vet ตรวจแถว `pet_vet_access` และ role ก่อนอ่าน/เขียน
 
-**Q: แชร์ให้ vet อย่างไร?**  
-A: Owner กรอกอีเมลบัญชี vet ที่มีอยู่ ระบบสร้างความสัมพันธ์ระหว่าง pet กับ vet; owner ถอนสิทธิ์ได้ ไม่ได้สร้างลิงก์ public
+**Q: Vet เข้าถึงสัตว์ได้อย่างไร?**
+A: Vet ค้นหาใน directory แล้วรับสัตว์เข้าดูแลด้วยบัญชีตนเอง; admin เพิ่มหรือถอนสิทธิ์ให้ vet ด้วยอีเมลได้. Owner เห็นรายชื่อผู้ดูแล แต่ไม่ได้อนุมัติ/ถอนจากหน้า owner. ระบบใช้ความสัมพันธ์ใน `pet_vet_access` ไม่ใช่ลิงก์ public
 
 **Q: ทำไม reminder ไม่ต้องมี cron job?**  
 A: หน้า Reminders คำนวณจากวันนัด วันวัคซีน วันสิ้นสุดยา และวัน follow-up เมื่อเรียก API; ตาราง reminder เก็บว่าอ่านแล้วหรือยัง จึงไม่มีการส่งออกนอกแอป
@@ -309,10 +315,10 @@ A: ID ของ reminder รวมวัน/เวลาของเหตุก
 A: `pets.weight` เป็นข้อมูลโปรไฟล์ปัจจุบัน; กราฟใช้จุดจาก `weight_records` ที่มีวันที่ชั่ง ต้องเพิ่ม record จึงเห็นแนวโน้ม
 
 **Q: ไฟล์เอกสารเก็บใน DB ไหม?**  
-A: DB เก็บ metadata/URL; bytes ของไฟล์อยู่ใน uploads volume/PVC และดาวน์โหลดผ่าน API ที่ตรวจสิทธิ์
+A: DB เก็บ metadata/URL; bytes ของเอกสารและรูปสัตว์อยู่ใน uploads volume/PVC และอ่านผ่าน API ที่ตรวจสิทธิ์
 
 **Q: ถ้าลบสัตว์จะเกิดอะไรขึ้น?**  
-A: DB ลบแถวประวัติที่อ้างสัตว์ด้วย cascade และ backend ลบไฟล์เอกสารที่เกี่ยวข้อง; ต้องยืนยันก่อนเพราะ UI กู้ไม่ได้
+A: DB ลบแถวประวัติที่อ้างสัตว์ด้วย cascade และ backend ลบไฟล์เอกสาร/รูปที่เกี่ยวข้อง; ต้องยืนยันก่อนเพราะ UI กู้ไม่ได้
 
 **Q: ทำไม JWT อยู่ใน sessionStorage?**  
 A: เพื่อให้ session ไม่ค้างข้าม browser session และให้ Axios ใส่ token ใน header; ข้อจำกัดคือยังต้องป้องกัน XSS และไม่มี token revocation ก่อนหมดอายุ
@@ -339,7 +345,7 @@ A: job แบบ Pipeline from SCM โหลดไฟล์จาก branch ใ�
 A: ยังไม่ได้ยืนยัน webhook จริง เพราะ local Jenkins ที่ `localhost` รับ event จาก GitHub ภายนอกไม่ได้ ต้องมี URL สาธารณะและตั้ง webhook
 
 **Q: โครงการเสร็จครบแผนหรือยัง?**  
-A: ฟีเจอร์หลักและ local deploy ทำได้แล้ว แต่ admin management, QR/shareable passport, การแจ้งเตือนนอกแอป, webhook สาธารณะ และวิดีโอเดโมยังไม่ครบ; ควรแยก core delivered กับ future work ให้ชัด
+A: ฟีเจอร์หลักรวม admin management ทำได้แล้ว แต่ QR/shareable passport, การแจ้งเตือนนอกแอป, webhook สาธารณะ และวิดีโอเดโมยังไม่ครบ; local deploy ต้องตรวจผลล่าสุดก่อนอ้างว่าพร้อม
 
 ## 14. จุดอ่านโค้ดต่อเมื่ออยากตอบเชิงลึก
 
@@ -363,7 +369,7 @@ A: ฟีเจอร์หลักและ local deploy ทำได้แล
 | Login ไม่ผ่าน | เช็กว่าเป็นบัญชีของ **แอป** ไม่ใช่ Jenkins; Compose กับ kind มีฐานข้อมูลคนละชุด; fresh seed กับ volume เดิมมีข้อมูลต่างกัน; อย่าแสดงรหัสผ่านจริงบนจอ |
 | เข้า URL แล้วเด้งไปหน้าอื่น | เช็กว่าล็อกอิน role ใด, token หมดอายุหรือไม่ และ URL นั้นอนุญาต role นั้นไหม |
 | Reminder หรือกราฟไม่ขึ้น | Reminder แสดงเฉพาะเหตุการณ์ใน 30 วันข้างหน้า; กราฟต้องมี `weight_records` ไม่ใช่เพียงค่า weight ใน pet profile; ตรวจข้อมูลในฐานข้อมูลชุดที่กำลังใช้ |
-| เพิ่มไฟล์ไม่สำเร็จ | เช็กว่าเป็น PDF/PNG/JPEG จริง ขนาดไม่เกิน 10 MB และ uploads volume/PVC พร้อม |
+| เพิ่มไฟล์ไม่สำเร็จ | เอกสารต้องเป็น PDF/PNG/JPEG ไม่เกิน 10 MB; รูปสัตว์ต้องเป็น JPG/PNG/WebP ไม่เกิน 5 MB; ตรวจ uploads volume/PVC และสิทธิ์เขียน |
 | Jenkins ไม่มีตัวเลือก `kind` | job แบบ SCM ยังโหลด `Jenkinsfile` เก่าหรือยังไม่ commit/push; ตรวจ branch และ build parameter ของ job |
 | Jenkins build ล้มที่ Secret file | ตรวจ credential ID `pet-health-passport-env` และคีย์ใน env file; หลีกเลี่ยงคัดลอกค่าลง console |
 | Pods พร้อมแต่ API ไม่ตอบ | ดู `kubectl get ingress,svc,pods`, Traefik logs และเส้นทาง `localhost:8081/api/health`; PostgreSQL PVC/Secret ก็ต้องพร้อม |
