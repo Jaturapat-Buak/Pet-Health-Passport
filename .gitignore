@@ -7,4 +7,5 @@ backend/uploads/*
 .DS_Store
 .presentation-build/
 .codex-finalizer/
+.tools/
 

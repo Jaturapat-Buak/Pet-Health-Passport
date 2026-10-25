@@ -1,11 +1,12 @@
 import 'dotenv/config';
 import { randomBytes } from 'node:crypto';
 
-const required = ['DATABASE_URL', 'JWT_SECRET'];
-
-for (const key of required) {
-  if (!process.env[key] && process.env.NODE_ENV === 'production') {
-    throw new Error(`Missing required environment variable: ${key}`);
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET) throw new Error('Missing required environment variable: JWT_SECRET');
+  if (!process.env.DATABASE_URL) {
+    for (const key of ['POSTGRES_HOST', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD']) {
+      if (!process.env[key]) throw new Error(`Missing required environment variable: ${key}`);
+    }
   }
 }
 
@@ -18,6 +19,10 @@ if (process.env.NODE_ENV === 'production' &&
 export const env = {
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
   databaseUrl: process.env.DATABASE_URL,
+  databaseHost: process.env.POSTGRES_HOST,
+  databaseName: process.env.POSTGRES_DB,
+  databaseUser: process.env.POSTGRES_USER,
+  databasePassword: process.env.POSTGRES_PASSWORD,
   jwtSecret: process.env.JWT_SECRET ?? randomBytes(32).toString('hex'),
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 5000)

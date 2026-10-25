@@ -27,7 +27,7 @@ Open `http://localhost:8080`, unlock Jenkins with the initial admin password pri
 2. Create a regular **Pipeline** job. Under **Pipeline**, select **Pipeline script from SCM**, choose **Git**, set repository URL to `https://github.com/Jaturapat-Buak/Pet-Health-Passport.git`, branch specifier to `*/main`, and script path to `Jenkinsfile`. Add Git credentials if the repository is private.
 3. Run **Build Now** once. This loads the Jenkinsfile and registers its `githubPush()` trigger. Check the pipeline stages and the output of `docker compose ps` in the Health Check stage.
 
-The pipeline passes the Jenkins secret file to Compose using `--env-file`. If the PostgreSQL volume already exists, its database password must match the one used to initialize that volume. The `.env` file in a developer checkout is not used by Jenkins.
+The pipeline passes the Jenkins secret file to Compose using `--env-file`. If the PostgreSQL volume already exists, its database password must match the one used to initialize that volume. The `.env` file in a developer checkout is not used by Jenkins. The `DEPLOY_TARGET` build parameter defaults to `compose`; select `kind` only after creating the local cluster. The `kind` target loads fresh images and deploys to Kubernetes using the same Secret file credential. See [Kubernetes setup](KUBERNETES_SETUP.md). Changes to the Jenkinsfile must be pushed to the branch configured in the SCM job before Jenkins can use them.
 
 ## Connect the webhook
 

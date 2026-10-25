@@ -13,7 +13,7 @@ The interface uses TH Sarabun PSK, with English branding and page/section headin
 - Frontend: React, Vite, React Router, Axios
 - Backend: Node.js, Express, PostgreSQL driver, bcrypt, JSON Web Tokens
 - Database: PostgreSQL 16
-- DevOps: Docker Compose and Jenkins
+- DevOps: Docker Compose, Jenkins, and local Kubernetes (kind)
 
 ## System architecture
 
@@ -115,6 +115,10 @@ To run Jenkins locally with Docker:
 
 This starts Jenkins at `http://localhost:8080` with Node.js, npm, Docker CLI, Docker Compose, and the required Jenkins plugins. Use the printed initial admin password, create the `pet-health-passport-env` Secret file credential from your local `.env`, then create the Pipeline job from this repository.
 
+## Run with Kubernetes
+
+On Windows with Docker Desktop and `kubectl`, run `./open-kubernetes.ps1` from PowerShell. It installs a checksum-verified local `kind` binary when needed, builds and loads the app images, creates a cluster, deploys PostgreSQL, the API, frontend, and Traefik, then checks the public API. Open `http://localhost:8081`. The cluster uses separate persistent volumes from Docker Compose; existing Compose database and uploads are **not** migrated automatically. See [Kubernetes setup](docs/KUBERNETES_SETUP.md) for prerequisites, Jenkins deployment, checks, and cleanup.
+
 ## Demo accounts
 
 | Role | Email | Password |
@@ -139,4 +143,4 @@ database/  PostgreSQL schema and demo seed data
 
 The latest local update was verified on 23 October 2026 with the backend unit suite, PostgreSQL role-policy integration tests, a frontend production build, and browser checks for the updated interface and veterinarian appointment flow.
 
-The owner-to-admin demo flow was verified on 5 October 2026. See the [final report](docs/FINAL_REPORT.md), [live demo and video guide](docs/DEMO_GUIDE.md), and [presentation slides](docs/Pet-Health-Passport-Presentation.pptx). The local Jenkins build #1 passed. The demo video still needs to be recorded; the Phase 7 GitHub webhook still needs a public Jenkins URL to activate.
+The owner-to-admin demo flow was verified on 5 October 2026. See the [study and presentation guide](docs/PROJECT_STUDY_AND_PRESENTATION.md), [final report](docs/FINAL_REPORT.md), [live demo and video guide](docs/DEMO_GUIDE.md), and [presentation slides](docs/Pet-Health-Passport-Presentation.pptx). The local Jenkins build #1 passed. The demo video still needs to be recorded; the Phase 7 GitHub webhook still needs a public Jenkins URL to activate.
