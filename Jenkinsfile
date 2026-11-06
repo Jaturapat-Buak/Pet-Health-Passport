@@ -92,7 +92,7 @@ pipeline {
       steps {
         withCredentials([file(credentialsId: 'pet-health-passport-env', variable: 'COMPOSE_ENV_FILE')]) {
           script {
-            composeOnAgent('--env-file "$COMPOSE_ENV_FILE" up -d', '--env-file "%COMPOSE_ENV_FILE%" up -d')
+            composeOnAgent('--env-file "$COMPOSE_ENV_FILE" up -d --wait --wait-timeout 180', '--env-file "%COMPOSE_ENV_FILE%" up -d --wait --wait-timeout 180')
           }
         }
       }
@@ -119,6 +119,7 @@ pipeline {
               'for /l %%i in (1,1,24) do (docker compose --env-file "%COMPOSE_ENV_FILE%" exec -T backend node src/healthcheck.js && exit /b 0 || timeout /t 5) & exit /b 1'
             )
             composeOnAgent('--env-file "$COMPOSE_ENV_FILE" ps', '--env-file "%COMPOSE_ENV_FILE%" ps')
+            composeOnAgent('--env-file "$COMPOSE_ENV_FILE" exec -T notification-worker node src/notification-healthcheck.js', '--env-file "%COMPOSE_ENV_FILE%" exec -T notification-worker node src/notification-healthcheck.js')
           }
         }
       }

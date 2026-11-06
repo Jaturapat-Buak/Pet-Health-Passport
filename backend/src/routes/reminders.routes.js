@@ -68,6 +68,21 @@ remindersRouter.get('/', async (request, response) => {
   response.json({ reminders: await currentReminders(request.user.id) });
 });
 
+remindersRouter.get('/preferences', async (request, response) => {
+  const { rows } = await pool.query('SELECT email_notifications_enabled FROM users WHERE id = $1', [request.user.id]);
+  response.json({ email_notifications_enabled: rows[0].email_notifications_enabled });
+});
+
+remindersRouter.put('/preferences', async (request, response) => {
+  if (typeof request.body?.email_notifications_enabled !== 'boolean') {
+    return response.status(400).json({ error: 'Choose a valid email notification setting' });
+  }
+  const { rows } = await pool.query(
+    'UPDATE users SET email_notifications_enabled = $2, updated_at = NOW() WHERE id = $1 RETURNING email_notifications_enabled',
+    [request.user.id, request.body.email_notifications_enabled]);
+  response.json({ email_notifications_enabled: rows[0].email_notifications_enabled });
+});
+
 remindersRouter.patch('/:id/read', async (request, response) => {
   if (!uuid.test(request.params.id)) return response.status(400).json({ error: 'Invalid reminder ID' });
   const reminder = (await currentReminders(request.user.id)).find((item) => item.id === request.params.id);

@@ -1,8 +1,10 @@
 # Pet Health Passport: Final Project Report
 
+Updated 6 November 2026. The October browser/Jenkins evidence below is historical; current CI and kind results must be checked live before presentation.
+
 ## 1. Project summary
 
-Pet Health Passport is a full-stack web application that keeps a pet's profile and health history in one place. An owner can record vaccinations, medical visits, allergies, medications, weights, and documents, then manage appointments and view upcoming reminders. The project also demonstrates a Docker Compose deployment and a Jenkins pipeline.
+Pet Health Passport is a full-stack web application that keeps a pet's profile and health history in one place. Owners manage pet records and view appointments/reminders; vets manage care and appointments; admins manage users and system data. Owners can opt in to appointment emails delivered by a RabbitMQ-backed worker to a local SMTP test inbox. The project demonstrates Docker Compose, Jenkins, and local Kubernetes deployment.
 
 ## 2. Problem and objectives
 
@@ -15,16 +17,17 @@ The delivered objectives are:
 3. Show appointments and reminders derived from care dates.
 4. Give owners and admins separate dashboards.
 5. Build, test, and deploy the application through Jenkins and Docker Compose.
+6. Let owners opt in to appointment emails processed by a RabbitMQ worker.
 
 ## 3. Scope and users
 
 | Role | Delivered behavior |
 | --- | --- |
-| Owner | Register, sign in, manage own pets and records, schedule visits, read reminders, view dashboard |
-| Vet | View shared pet passports and add medical visits |
-| Admin | Sign in and view system statistics and recent activity |
+| Owner | Register, sign in, manage own pets and records, view appointments/reminders, opt in to appointment emails, view dashboard |
+| Vet | Find and take pets into care, manage appointments for pets in care, read records and add medical visits |
+| Admin | Manage users, pets, health records, appointments and vet assignments; view system statistics |
 
-Admin user management, public shareable passports, and QR codes remain outside the delivered application.
+Public shareable passports and QR codes remain outside the delivered application. Admin user management is implemented.
 
 ## 4. System design
 
@@ -32,11 +35,12 @@ Admin user management, public shareable passports, and QR codes remain outside t
 Browser -> React/Vite (Nginx in Docker) -> Express REST API -> PostgreSQL
                                                |
                                                +-> local document storage volume
+PostgreSQL -> notification worker -> RabbitMQ -> notification worker -> SMTP/Mailpit
 ```
 
 The frontend stores the JWT in browser session storage and sends it as a bearer token. The backend checks the token and role before protected routes. Owner queries are scoped to the authenticated owner's pets. PostgreSQL holds users, pets, health records, appointments, and reminder read state. Uploaded documents are kept in a Docker volume.
 
-The database contains `users`, `pets`, `vaccination_records`, `medical_records`, `allergy_records`, `medication_records`, `appointments`, `weight_records`, `documents`, and `reminders`. Reminders shown in the application are derived from upcoming appointments, vaccine due dates, medication end dates, and medical follow-up dates. The `reminders` table stores read state for those events.
+The database also contains `pet_vet_access` and `appointment_notifications`. Reminders shown in the application are derived from care dates; the `reminders` table stores read state. The separate notification table stores appointment email attempts and results. The worker scans due appointments, publishes job IDs and appointment dates to RabbitMQ, and sends via SMTP after checking the latest appointment and opt-in state.
 
 ## 5. Implemented features
 
@@ -46,10 +50,12 @@ The database contains `users`, `pets`, `vaccination_records`, `medical_records`,
 - PDF, PNG, and JPEG document upload and authenticated download.
 - Appointment creation, editing, status changes, and deletion.
 - In-app reminders for events in the next 30 days, with read state.
+- Opt-in email reminders for appointments via RabbitMQ, a separate worker, SMTP and local Mailpit; retry up to five times.
 - Owner dashboard with counts, upcoming care, recent records, and weight chart.
 - Admin dashboard with counts, recent users and pets, and recent activity.
-- Owner-controlled veterinarian access for individual pets, with shared history and vet-authored medical visits.
-- Docker Compose services for PostgreSQL, API, and frontend; Jenkins pipeline for checkout, dependency installation, tests, build, deployment, and health check.
+- Vet self-assignment to pets, admin-managed access, shared history, and vet-authored medical visits.
+- Admin user management and role changes.
+- Docker Compose services for PostgreSQL, RabbitMQ, Mailpit, API, worker and frontend; Jenkins pipeline for checkout, tests, build, deployment, and health checks.
 
 ## 6. Verification
 
@@ -67,6 +73,8 @@ On 5 October 2026, the local demo flow was exercised in the browser:
 
 Jenkins job `pet-health-passport` build #1 completed successfully, including backend tests, frontend build, Docker build and deployment, and health check. The pipeline result is available locally at `http://localhost:8080/job/pet-health-passport/1/` while Jenkins is running.
 
+On 6 November 2026, the RabbitMQ notification feature passed 16 backend tests (one database integration test was skipped because it requires a separate test database). Docker Compose and kind both reached healthy/ready state. In each environment, an opted-in demo owner received a new appointment email in Mailpit through RabbitMQ and the worker. The test appointment was deleted and the owner's prior email preference restored. The updated Jenkins pipeline has not been run yet; build #1 is historical evidence.
+
 Browser evidence from the local demo:
 
 ![Reminder generated from the new appointment](assets/reminders-demo.png)
@@ -78,11 +86,11 @@ The new demo records live in the current local PostgreSQL volume. A fresh volume
 ## 7. Limitations and future work
 
 - The GitHub webhook is configured in the pipeline but cannot receive GitHub events until Jenkins has a public HTTPS URL and the repository webhook is created.
-- Vets can add medical visits for shared pets, but cannot edit or delete existing records. Admin user management is not implemented.
-- Reminders are shown in the app; email, push, and LINE delivery are not implemented.
+- Vets can add medical visits for pets in care, but cannot edit or delete existing health records.
+- Email delivery is implemented for opted-in appointment reminders only and is captured locally by Mailpit. Production SMTP credentials, deliverability and bounce handling are not configured. Push and LINE delivery are not implemented. At-least-once processing can yield a duplicate if SMTP accepts a message immediately before a worker crash.
 - Document files use local Docker storage, so a production deployment would need backup and storage planning.
 - The seed is intended for a classroom demo, not production data. Demo passwords must not be used for a public deployment.
 
 ## 8. Conclusion
 
-The owner journey from pet record to appointment and reminder works end to end, and an admin can monitor the resulting activity. Owners can also grant a vet access to a pet's passport and remove it later. Docker Compose and Jenkins provide a repeatable local build and deployment path. Remaining work includes external integration and expanded admin permissions.
+The owner journey from pet record to in-app reminder and optional appointment email works locally. Vets manage care and scheduling; admins manage users and data. Docker Compose and local Kubernetes provide repeatable deployments, while Jenkins defines the CI/CD path. Remaining work includes production email integration, a public webhook, and the optional QR/shareable passport.

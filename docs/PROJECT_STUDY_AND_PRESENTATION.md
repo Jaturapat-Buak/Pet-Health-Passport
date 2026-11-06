@@ -1,10 +1,10 @@
 # คู่มือศึกษาและนำเสนอ Pet Health Passport
 
-เอกสารนี้อธิบายระบบตามโค้ดใน repository ณ 25 ตุลาคม 2026 หลังรวม UI/สิทธิ์บทบาทเวอร์ชันใหม่ ใช้เตรียมเดโม อธิบายสถาปัตยกรรม และตอบคำถามหลังนำเสนอ โดยแยกความสามารถที่มีจริงออกจากแนวคิดใน `PROJECT_PLAN.md` ข้อมูลจำนวนผู้ใช้/สัตว์เลี้ยงและสถานะเซิร์ฟเวอร์ในวันนำเสนออาจเปลี่ยนได้ ต้องตรวจสดก่อนเริ่ม
+เอกสารนี้อธิบายระบบตามโค้ดใน repository ณ 6 พฤศจิกายน 2026 หลังเพิ่ม RabbitMQ notification worker ใช้เตรียมเดโม อธิบายสถาปัตยกรรม และตอบคำถามหลังนำเสนอ โดยแยกความสามารถที่มีจริงออกจากแนวคิดใน `PROJECT_PLAN.md` ข้อมูลจำนวนผู้ใช้/สัตว์เลี้ยงและสถานะเซิร์ฟเวอร์ในวันนำเสนออาจเปลี่ยนได้ ต้องตรวจสดก่อนเริ่ม
 
 ## 1. สรุปโครงการใน 30 วินาที
 
-Pet Health Passport เป็นเว็บแอปเก็บข้อมูลสุขภาพสัตว์เลี้ยงในที่เดียว เจ้าของจัดการโปรไฟล์ รูป ประวัติวัคซีน การรักษา อาการแพ้ ยา น้ำหนัก และเอกสาร พร้อมดูนัดหมาย/แจ้งเตือน สัตวแพทย์ค้นหาและรับสัตว์เข้าดูแล จัดนัด และเพิ่มบันทึกการรักษาได้ ส่วนผู้ดูแลระบบจัดการผู้ใช้ สิทธิ์ สัตว์เลี้ยง และดูภาพรวม โครงการมี Docker Compose, Jenkins และตัวเลือก Kubernetes แบบ local สำหรับสาธิตการ build/deploy
+Pet Health Passport เป็นเว็บแอปเก็บข้อมูลสุขภาพสัตว์เลี้ยงในที่เดียว เจ้าของจัดการโปรไฟล์ รูป ประวัติวัคซีน การรักษา อาการแพ้ ยา น้ำหนัก และเอกสาร พร้อมดูนัดหมาย/แจ้งเตือน และเลือกเปิดอีเมลเตือนนัดได้ สัตวแพทย์ค้นหาและรับสัตว์เข้าดูแล จัดนัด และเพิ่มบันทึกการรักษาได้ ส่วนผู้ดูแลระบบจัดการผู้ใช้ สิทธิ์ สัตว์เลี้ยง และดูภาพรวม โครงการมี Docker Compose, Jenkins และตัวเลือก Kubernetes แบบ local สำหรับสาธิตการ build/deploy
 
 **ประโยคหลักสำหรับนำเสนอ:** "เจ้าของเห็นสุขภาพสัตว์เลี้ยงในที่เดียว สัตวแพทย์จัดการการดูแลและนัดหมายตามสิทธิ์ ส่วนผู้ดูแลระบบดูแลบัญชีและข้อมูลภาพรวม"
 
@@ -13,13 +13,14 @@ Pet Health Passport เป็นเว็บแอปเก็บข้อมู
 | เรื่อง | สถานะจริง |
 | --- | --- |
 | ฟีเจอร์ owner, vet, admin รวมการจัดการผู้ใช้/การดูแล | มีในเว็บและ API; UI/role policy ใหม่ผ่านการทดสอบของเพื่อนเมื่อ 23 ตุลาคม 2026 |
+| RabbitMQ appointment email | Compose และ kind ส่งอีเมลเข้า Mailpit จริงในการทดสอบวันที่ 6 พฤศจิกายน 2026; Jenkins pipeline เวอร์ชันใหม่ยังไม่ได้รัน |
 | Docker Compose และ Jenkins target `compose` | เคยผ่าน Jenkins build #1 ตามรายงานวันที่ 5 ตุลาคม 2026 |
-| Kubernetes local ด้วย kind | Deploy UI/backend ที่รวมล่าสุดและตรวจหน้าเว็บ/API สำเร็จวันที่ 25 ตุลาคม 2026; PostgreSQL/uploads PVC เดิมยัง Bound |
+| Kubernetes local ด้วย kind | Deploy UI/backend/RabbitMQ/Mailpit/worker สำเร็จวันที่ 6 พฤศจิกายน 2026 ทุก Pod Ready และส่งอีเมลทดสอบได้; PostgreSQL/uploads PVC เดิมยัง Bound |
 | Jenkins target `kind` | มีโค้ดและทดสอบสคริปต์จากคอนเทนเนอร์แล้ว แต่ยังไม่มีหลักฐานว่า Pipeline job จริงรัน target นี้สำเร็จ |
 | GitHub push webhook | เตรียม trigger ใน Jenkinsfile แต่ยังต้องมี Jenkins URL สาธารณะและตั้งค่า webhook |
 | วิดีโอเดโม | ยังไม่ได้บันทึกตามเอกสารเดิม |
 
-การทดสอบข้างต้นเป็นผล ณ วันที่ระบุ ไม่ใช่การรับรองว่า Docker, Jenkins หรือ Kubernetes กำลังทำงานอยู่ในขณะที่เปิดเอกสารนี้ ตรวจสถานะสดตามหัวข้อ 12 ก่อนนำเสนอ. Backend tests ล่าสุดผ่าน 9 รายการ โดย integration test ที่ต้องมีฐานข้อมูลทดสอบแยกถูกข้าม; frontend production build ผ่านใน Docker
+การทดสอบข้างต้นเป็นผล ณ วันที่ระบุ ไม่ใช่การรับรองว่า Docker, Jenkins หรือ Kubernetes กำลังทำงานอยู่ในขณะที่เปิดเอกสารนี้ ตรวจสถานะสดตามหัวข้อ 12 ก่อนนำเสนอ. Backend tests ที่รวม notification ผ่านโดย integration test ที่ต้องมีฐานข้อมูลทดสอบแยกถูกข้าม; frontend production build ผ่านใน Docker
 
 ## 3. ผู้ใช้และสิทธิ์
 
@@ -31,6 +32,7 @@ Pet Health Passport เป็นเว็บแอปเก็บข้อมู
 | ดูนัดหมายที่เข้าถึงได้ | - | ได้ | ได้ | ได้ |
 | สร้าง/แก้/เปลี่ยนสถานะนัดหมาย | - | - | เฉพาะสัตว์ในความดูแล | ได้ทุกตัว |
 | ดูและทำเครื่องหมายแจ้งเตือนว่าอ่านแล้ว | - | ได้ | - | - |
+| เปิด/ปิดอีเมลเตือนนัดหมาย | - | ได้ | - | - |
 | ดูรายชื่อ vet ที่ดูแลสัตว์ของตน | - | ได้ | - | ได้ |
 | ค้นหา/รับสัตว์เข้าดูแลและยุติการดูแล | - | - | ได้ด้วยตนเอง | จัดสิทธิ์ให้/ถอนให้ vet ได้ |
 | ดูประวัติ/ดาวน์โหลดเอกสารของสัตว์ในความดูแล | - | - | ได้ | ได้ทุกตัว |
@@ -53,6 +55,9 @@ Express API (auth + validation + role/owner/care checks)
   | SQL แบบ parameterized       | รูปสัตว์ + ไฟล์เอกสาร
   v                            v
 PostgreSQL                    uploads volume/PVC
+  | appointment notifications
+  v
+notification worker <-> RabbitMQ -> SMTP (Mailpit ในเดโม)
 ```
 
 1. React เลือกหน้าตาม URL และบทบาทผู้ใช้ผ่าน `ProtectedRoute`.
@@ -61,6 +66,7 @@ PostgreSQL                    uploads volume/PVC
 4. Express ตรวจลายเซ็นและวันหมดอายุของ JWT แล้วอ่านบัญชีล่าสุดจากตาราง `users` ก่อนตรวจ role. จากนั้น route ที่เกี่ยวกับสัตว์เลี้ยงตรวจ owner, แถวใน `pet_vet_access` หรือสิทธิ์ admin เพิ่มอีกชั้น.
 5. PostgreSQL เก็บข้อมูลเชิงโครงสร้าง ส่วนรูปสัตว์และไฟล์เอกสารเก็บเป็นไฟล์ใน volume/PVC โดยฐานข้อมูลเก็บ URL/metadata.
 6. หน้าแดชบอร์ดและแจ้งเตือนเรียก API ที่ query ข้อมูลจริง ไม่ได้ฝังตัวเลขตัวอย่างใน frontend.
+7. อีเมลเตือนนัดเป็นระบบแยก: owner ต้อง opt in, worker ตรวจนัดที่อยู่ในช่วง 24 ชั่วโมง สร้างงานใน PostgreSQL แล้วส่ง job ID ผ่าน RabbitMQ; worker ตรวจนัด/เจ้าของ/การตั้งค่าล่าสุดก่อนส่ง SMTP.
 
 ไฟล์อ้างอิง: [App routes](../frontend/src/App.jsx), [AuthContext](../frontend/src/auth/AuthContext.jsx), [API client](../frontend/src/api/client.js), [Express app](../backend/src/app.js), [auth middleware](../backend/src/middlewares/auth.js)
 
@@ -141,7 +147,8 @@ API ตรวจความสัมพันธ์ของวันที่:
 - รายการแสดงวัน ชื่อ ข้อความ ลิงก์ไปนัด/สัตว์ และ **Mark read**. ตัวนับ unread อยู่ด้านบน.
 - Reminder ถูก **คำนวณเมื่อเรียก API** จากข้อมูลต้นทาง ไม่ใช่ตั้ง cron ส่งข้อความล่วงหน้า ตาราง `reminders` เก็บสถานะ `is_read` ของเหตุการณ์ที่ถูกอ่าน.
 - ID ของ reminder ขึ้นกับชนิดเหตุการณ์ + ID ต้นทาง + วัน/เวลา; หากเปลี่ยนวันที่เหตุการณ์จะกลายเป็น reminder ใหม่และกลับมาเป็นยังไม่อ่าน. ถ้าเหตุการณ์พ้น 30 วัน/ถูกลบ/เปลี่ยนเป็น cancelled ก็ไม่แสดงในรายการปัจจุบัน.
-- ไม่มีอีเมล, LINE, push notification หรือการแจ้งเตือนนอกแอป.
+- สวิตช์ **รับอีเมลเตือนก่อนนัดหมาย 24 ชั่วโมง** ปิดเป็นค่าเริ่มต้น; owner เปิด/ปิดได้ อีเมลส่งเฉพาะนัดหมาย ไม่ใช่วัคซีน/ยา/follow-up และไม่เปลี่ยนสถานะอ่านในเว็บ.
+- Worker ตรวจงานทุก 15 วินาที งานถึงกำหนดถูกบันทึกใน `appointment_notifications` และส่ง job ID ไป RabbitMQ. ถ้า SMTP ล้มเหลวลองใหม่ได้สูงสุด 5 ครั้ง โดยเก็บสถานะใน DB. ใน local demo อีเมลเข้า Mailpit ไม่ออกสู่อินเทอร์เน็ต; ยังไม่มี LINE/push.
 
 ### 5.8 Vet: `/vet/dashboard`, `/vet/pets`, `/vet/pets/:id`
 
@@ -172,7 +179,7 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | Documents | `GET/POST /pets/:petId/documents`, `GET /documents/:id/file`, `DELETE /documents/:id` |
 | Pet photos | `GET /pet-photos/:id` คืนไฟล์ภาพหลังตรวจ JWT และสิทธิ์เข้าถึงสัตว์; อัปโหลด/ลบรูปผ่าน `POST/PUT /pets` |
 | Appointments | `GET/POST /appointments`, `GET/PUT/DELETE /appointments/:id`, `PATCH /appointments/:id/status`; list ใช้ `?view=upcoming` หรือ `?view=all` |
-| Reminders | `GET /reminders`, `PATCH /reminders/:id/read` |
+| Reminders | `GET /reminders`, `PATCH /reminders/:id/read`, `GET/PUT /reminders/preferences` สำหรับ owner |
 | Dashboards | `GET /dashboard/owner`, `GET /dashboard/admin` |
 | Vet | `GET /vet/available-pets`, `GET /vet/pets`, `GET /vet/pets/:id`, `GET /vet/pets/:id/:resource`, `POST /vet/pets/:id/medical-records`, `GET /vet/documents/:id/file` |
 | Admin users | `GET/POST /admin/users`, `PUT/DELETE /admin/users/:id` |
@@ -183,7 +190,7 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 
 | ตาราง | เก็บอะไร | ความสัมพันธ์สำคัญ |
 | --- | --- | --- |
-| `users` | ชื่อ อีเมล hash รหัสผ่าน role | owner/vet/admin; อีเมลไม่ซ้ำ |
+| `users` | ชื่อ อีเมล hash รหัสผ่าน role และ email opt-in | owner/vet/admin; อีเมลไม่ซ้ำ |
 | `pets` | โปรไฟล์สัตว์ | `owner_id -> users`; microchip ID ไม่ซ้ำ |
 | `pet_vet_access` | สิทธิ์ vet ต่อสัตว์หนึ่งตัว | composite key `(pet_id, vet_id)` กันแชร์ซ้ำ |
 | `vaccination_records` | วัคซีนและวันครบกำหนด | ผูก `pet_id` |
@@ -194,8 +201,9 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | `weight_records` | จุดข้อมูลน้ำหนักตามวัน | ผูก `pet_id` |
 | `documents` | metadata ของไฟล์ | ผูก `pet_id`; `file_url` ชี้ endpoint ที่ต้อง auth |
 | `reminders` | สถานะอ่านของเหตุการณ์ | ผูก user/pet; เนื้อหารายการปัจจุบันคำนวณจากตารางต้นทาง |
+| `appointment_notifications` | งานส่งอีเมล สถานะ retry และเวลาส่ง | ผูกนัด/ผู้รับ; นัดถูกลบแล้ว cascade; วันนัดหรือ owner เปลี่ยนแล้ว reset งาน |
 
-ตารางและ enum หลักสร้างจาก [database/init.sql](../database/init.sql). ฐานข้อมูลใหม่โหลด [seed.sql](../database/seed.sql) ครั้งแรกเมื่อ volume ยังว่าง; volume เดิมไม่ถูก reseed อัตโนมัติ. Backend รัน [migration](../backend/src/config/migrate.js) ตอนเริ่มเพื่อเพิ่มส่วน `pet_vet_access`/`created_by` ในฐานข้อมูลเก่าโดยไม่ต้องลบ volume. Foreign key หลายตารางใช้ `ON DELETE CASCADE` เมื่อสัตว์ถูกลบ; backend ต้องลบไฟล์เอกสารและรูปจาก storage แยก. รูปเก็บ path ใน `pets.image_url` ไม่ได้เก็บ bytes ในฐานข้อมูล
+ตารางและ enum หลักสร้างจาก [database/init.sql](../database/init.sql). ฐานข้อมูลใหม่โหลด [seed.sql](../database/seed.sql) ครั้งแรกเมื่อ volume ยังว่าง; volume เดิมไม่ถูก reseed อัตโนมัติ. Backend รัน [migration](../backend/src/config/migrate.js) ตอนเริ่มเพื่อเพิ่มส่วน `pet_vet_access`/`created_by` และ notification schema ในฐานข้อมูลเก่าโดยไม่ต้องลบ volume. Foreign key หลายตารางใช้ `ON DELETE CASCADE` เมื่อสัตว์ถูกลบ; backend ต้องลบไฟล์เอกสารและรูปจาก storage แยก. รูปเก็บ path ใน `pets.image_url` ไม่ได้เก็บ bytes ในฐานข้อมูล
 
 ## 8. เครื่องมือพัฒนาและ deploy: ใช้อะไร ทำหน้าที่อะไร
 
@@ -211,7 +219,9 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | PostgreSQL + `pg` | จัดเก็บข้อมูลสัมพันธ์ด้วย SQL parameterized | `database/init.sql`, `backend/src/config/database.js` |
 | bcrypt/JWT | hash รหัสผ่านและระบุตัวตน | `backend/src/routes/auth.routes.js` |
 | Multer | รับเอกสาร multipart สูงสุด 10 MB และรูปสัตว์สูงสุด 5 MB | `backend/src/routes/health-records.routes.js`, `backend/src/routes/pets.routes.js` |
-| Docker Compose | รัน frontend, backend, PostgreSQL พร้อม volume และ health check บนเครื่องเดียว | `docker-compose.yml`; เว็บ `http://localhost:5173` |
+| RabbitMQ | คิวงานส่งอีเมลนัดหมายให้ worker; message มีเพียง job ID/วันนัด | `backend/src/notification-worker.js`, `docker-compose.yml` |
+| Nodemailer + Mailpit | ส่ง SMTP และรับอีเมลเดโมในเครื่อง | worker; mailbox `http://localhost:8025` ใน Compose |
+| Docker Compose | รัน frontend, backend, PostgreSQL, RabbitMQ, Mailpit และ worker พร้อม health check | `docker-compose.yml`; เว็บ `http://localhost:5173` |
 | Nginx | เสิร์ฟไฟล์ React build, ส่ง `/api` ไป backend ใน Compose | `frontend/nginx.conf` |
 | Jenkins | pipeline checkout -> `npm ci` -> test -> frontend build -> build image -> deploy -> health check | `Jenkinsfile`; UI `http://localhost:8080` เมื่อรันอยู่ |
 | kind + kubectl + Traefik | Kubernetes แบบ local; kind สร้าง cluster, kubectl apply/ดูสถานะ, Traefik แยก `/api` กับ `/` | `open-kubernetes.ps1`, `k8s/`; เว็บ `http://localhost:8081` เมื่อรันอยู่ |
@@ -222,7 +232,7 @@ Base path คือ `/api`; รายละเอียดอยู่ใน [ro
 | --- | --- | --- |
 | จุดเข้าเว็บ | `localhost:5173` ผ่าน Nginx | `localhost:8081` ผ่าน kind port mapping -> Traefik Ingress |
 | สถานะบริการ | Compose healthchecks/dependencies | Kubernetes startup/readiness/liveness probes และ rollouts |
-| ฐานข้อมูล/ไฟล์ | Docker named volumes `postgres_data`, `uploads_data` | PVC ของ PostgreSQL และ uploads ใน kind node |
+| ฐานข้อมูล/ไฟล์ | Docker named volumes ของ PostgreSQL, uploads, RabbitMQ | PVC ของ PostgreSQL, uploads, RabbitMQ ใน kind node |
 | Secret/config | `.env` ส่งให้ Compose | Kubernetes Secret จาก env file และ ConfigMap |
 | image update | `docker compose up --build` | build, `kind load docker-image`, apply Deployment tag ใหม่ |
 | ข้อมูลร่วมกันไหม | ไม่ | **ไม่**: สองชุดข้อมูลแยกกัน ไม่มี auto migration |
@@ -233,9 +243,9 @@ Kubernetes นี้เป็นคลัสเตอร์หนึ่ง node 
 
 1. Jenkins checkout โค้ดจาก repository ตาม job ที่ตั้งค่า; **ไฟล์ที่ยังไม่ commit/push จะไม่เข้า job แบบ SCM**.
 2. `npm ci` backend/frontend, รัน backend tests และ build frontend.
-3. ตัวแปร `DEPLOY_TARGET` ค่าเริ่มต้นคือ `compose`: build image, `docker compose up -d`, ตรวจ health จาก backend container.
-4. ถ้าเลือก `kind`: build image tag ตามหมายเลข build, load เข้า cluster, apply Secret/manifest/Deployment, รอ rollout และตรวจ `localhost:8081/api/health`.
-5. ค่าใน Jenkins credential ชนิด **Secret file** ID `pet-health-passport-env` ถูกส่งให้ deploy; ไม่ควรพิมพ์ค่าลง console หรือ commit `.env`.
+3. ตัวแปร `DEPLOY_TARGET` ค่าเริ่มต้นคือ `compose`: build image, `docker compose up -d --wait`, ตรวจ health ของ backend และ worker.
+4. ถ้าเลือก `kind`: build image tag ตามหมายเลข build, load เข้า cluster, apply Secret/manifest/Deployment รวม RabbitMQ/Mailpit/worker, รอ rollout และตรวจ `localhost:8081/api/health`.
+5. ค่าใน Jenkins credential ชนิด **Secret file** ID `pet-health-passport-env` ต้องมี `RABBITMQ_USER`/`RABBITMQ_PASSWORD` เพิ่มจากเดิม; ไม่ควรพิมพ์ค่าลง console หรือ commit `.env`.
 6. `githubPush()` คือการเตรียม trigger; GitHub จะส่งถึง Jenkins ได้ก็ต่อเมื่อ Jenkins มี HTTPS URL สาธารณะและตั้ง webhook แล้ว. การกด Build Now/Build with Parameters ใช้ได้โดยไม่ต้องมี webhook.
 
 คู่มือเฉพาะ: [Jenkins setup](JENKINS_SETUP.md), [Kubernetes setup](KUBERNETES_SETUP.md), [Final report](FINAL_REPORT.md)
@@ -250,10 +260,11 @@ Kubernetes นี้เป็นคลัสเตอร์หนึ่ง node 
 - **Secret:** `.env` ถูก ignore ใน Git; Jenkins เก็บใน Credentials; K8s สร้าง Secret จากไฟล์ local. Kubernetes Secret เป็นกลไกจัดการค่า config ไม่ใช่ระบบ encryption/secret management ระดับ production โดยตัวมันเอง.
 - **CORS:** backend กำหนด origin ตาม environment; local Compose และ kind ใช้ origin คนละพอร์ต.
 - **การลบ:** UI ขอ confirm ก่อนลบสัตว์/record/นัด; DB cascade ช่วยลบแถวที่ผูกกัน แต่ต้องสำรองข้อมูลหากต้องการกู้คืน.
+- **อีเมล:** ปิดโดยค่าเริ่มต้นและเปิดเองได้; คิวส่งเพียง job ID. Worker ดึงอีเมลและวันนัดล่าสุดจาก DB ก่อนส่ง. การส่งแบบ at-least-once อาจซ้ำได้หาก SMTP รับแล้วแต่ worker ล้มก่อนบันทึกผล; Mailpit เป็นเพียงกล่องรับทดสอบ ไม่ใช่บริการส่งจริง.
 
 ## 10. สิ่งที่ยังไม่มี: ห้ามเผลอพูดว่าทำแล้ว
 
-- ยังไม่มี QR code, public/shareable passport link, health status badge ที่คำนวณอัตโนมัติ, ระบบ email/LINE/push, calendar view, แอปมือถือ หรือเชื่อมระบบคลินิกจริง. มีการค้นหาสัตว์ใน vet directory และผู้ใช้ใน admin แล้ว แต่ยังไม่ใช่ search/filter ทุกข้อมูล.
+- ยังไม่มี QR code, public/shareable passport link, health status badge ที่คำนวณอัตโนมัติ, LINE/push, calendar view, แอปมือถือ หรือเชื่อมระบบคลินิกจริง. อีเมลเตือนนัดทำงานผ่าน Mailpit ในเดโมเท่านั้น; ยังไม่ได้ผูก SMTP provider สำหรับส่งจริง และยังไม่ครอบคลุมวัคซีน/ยา/follow-up. มีการค้นหาสัตว์ใน vet directory และผู้ใช้ใน admin แล้ว แต่ยังไม่ใช่ search/filter ทุกข้อมูล.
 - Vet ยังแก้/ลบบันทึกสุขภาพเดิมหรือเพิ่มชนิด record อื่นนอกจาก medical visit ไม่ได้; การจัดนัดหมายทำได้แล้ว.
 - Certificate URL ใน vaccination เป็นลิงก์ ไม่ใช่ document upload; รูปสัตว์อัปโหลดไฟล์ได้แล้ว.
 - คลัสเตอร์ kind และ Compose เป็น local demo ไม่ใช่ระบบ production ที่มี TLS, backup/restore อัตโนมัติ, shared object storage หรือหลาย node.
@@ -268,10 +279,10 @@ Kubernetes นี้เป็นคลัสเตอร์หนึ่ง node 
 | 1:25 | เปิด Pets -> Milo -> สลับ 6 แท็บ | Passport รวมข้อมูลสุขภาพหลายชนิดในตัวเดียว |
 | 2:20 | เพิ่ม medical visit พร้อม follow-up date | บันทึกแล้วเกิดข้อมูลสำหรับ reminder ใน 30 วัน |
 | 3:00 | เปิด Appointments ใน owner | เจ้าของเห็นนัดของสัตว์ตนเอง แต่เปลี่ยนเองไม่ได้ |
-| 3:40 | Reminders -> Mark read | Reminder คำนวณจากวันใน record และเก็บสถานะอ่าน |
+| 3:40 | Reminders -> เปิดรับอีเมล -> Mark read | Reminder ในเว็บแยกจากอีเมลเตือนนัด; opt-in ปิดเริ่มต้น |
 | 4:20 | ดู Veterinarian access -> login vet -> ค้นหาและรับสัตว์เข้าดูแล -> สร้างนัด | Vet รับเคสเองได้และจัดนัดเฉพาะสัตว์ที่ดูแล; ยังแก้ประวัติเดิมไม่ได้ |
 | 5:20 | login admin -> dashboard -> Users | เห็นสถิติรวมและจัดการบัญชี/role ได้; อย่าแก้บัญชีจริงระหว่างเดโม |
-| 6:00 | แสดง Jenkins stages และ/หรือ `kubectl get pods` | เชื่อมโค้ด -> test/build -> deploy -> health check; ย้ำผลจริงที่แสดงบนจอ |
+| 6:00 | เปิด Mailpit หรือแสดง Jenkins stages/`kubectl get pods` | อีเมลเดโมผ่าน RabbitMQ worker; เชื่อมโค้ด -> test/build -> deploy -> health check |
 
 ใช้ข้อมูล demo จาก [README](../README.md) และ [DEMO_GUIDE](DEMO_GUIDE.md) แต่ตรวจวันนัดก่อนโชว์: seed ใช้วันสัมพันธ์กับวันที่สร้างฐานข้อมูลครั้งแรก ส่วน volume เก่าคงข้อมูลและวันที่เดิมอยู่. หลีกเลี่ยงโชว์ `.env`, Jenkins credentials หรือข้อมูลส่วนตัว. ถ้า demo บน kind ข้อมูลอาจไม่เหมือน Compose เพราะเป็นคนละฐานข้อมูล
 
@@ -292,7 +303,7 @@ curl.exe http://localhost:5173/api/health
 curl.exe http://localhost:8081/api/health
 ```
 
-ใช้ URL ที่กำลังรันจริงเท่านั้น: frontend Compose `http://localhost:5173`, kind `http://localhost:8081`, Jenkins `http://localhost:8080`. ผล `GET /api/health` ที่ดีมี `status: ok` และ `database: connected`. ตรวจ Jenkins build number/result ใน UI ก่อนอ้างว่า CI ผ่านล่าสุด; ผล Jenkins วันที่ 5 ตุลาคมเป็นหลักฐานย้อนหลัง ส่วน kind ตรวจใหม่วันที่ 25 ตุลาคม
+ใช้ URL ที่กำลังรันจริงเท่านั้น: frontend Compose `http://localhost:5173`, kind `http://localhost:8081`, Jenkins `http://localhost:8080`. ผล `GET /api/health` ที่ดีมี `status: ok` และ `database: connected`. ตรวจ Jenkins build number/result ใน UI ก่อนอ้างว่า CI ผ่านล่าสุด; ผล Jenkins วันที่ 5 ตุลาคมเป็นหลักฐานย้อนหลัง ส่วน kind ตรวจใหม่วันที่ 6 พฤศจิกายน
 
 ## 13. คำถามที่อาจถูกถาม พร้อมคำตอบสั้น
 
@@ -305,8 +316,11 @@ A: ไม่ได้ route ของ owner query พร้อม `owner_id`; ro
 **Q: Vet เข้าถึงสัตว์ได้อย่างไร?**
 A: Vet ค้นหาใน directory แล้วรับสัตว์เข้าดูแลด้วยบัญชีตนเอง; admin เพิ่มหรือถอนสิทธิ์ให้ vet ด้วยอีเมลได้. Owner เห็นรายชื่อผู้ดูแล แต่ไม่ได้อนุมัติ/ถอนจากหน้า owner. ระบบใช้ความสัมพันธ์ใน `pet_vet_access` ไม่ใช่ลิงก์ public
 
-**Q: ทำไม reminder ไม่ต้องมี cron job?**  
-A: หน้า Reminders คำนวณจากวันนัด วันวัคซีน วันสิ้นสุดยา และวัน follow-up เมื่อเรียก API; ตาราง reminder เก็บว่าอ่านแล้วหรือยัง จึงไม่มีการส่งออกนอกแอป
+**Q: Reminder ในเว็บกับอีเมลต่างกันอย่างไร?**
+A: หน้า Reminders คำนวณจากวันนัด วัคซีน ยา และ follow-up เมื่อเรียก API; ตาราง `reminders` เก็บสถานะอ่าน ส่วนอีเมลเตือนนัดมี worker ตรวจทุก 15 วินาทีและตาราง `appointment_notifications` เก็บสถานะส่ง เจ้าของต้องเปิดรับเองก่อน
+
+**Q: ทำไมใช้ RabbitMQ ไม่ใช้ Kafka?**
+A: งานนี้คือให้ worker หนึ่งตัวทำงานส่งอีเมลแล้ว ack; RabbitMQ มี work queue, retry และ dead-letter ตรงโจทย์ ยังไม่ต้องเก็บ event stream ให้หลายระบบอ่านย้อนหลัง
 
 **Q: ทำไมแก้วันแล้ว reminder กลับมาเป็นยังไม่อ่าน?**  
 A: ID ของ reminder รวมวัน/เวลาของเหตุการณ์ วันใหม่คือเหตุการณ์ใหม่ สถานะอ่านเดิมจึงไม่ถูกนำมาใช้ผิดรายการ
@@ -345,7 +359,7 @@ A: job แบบ Pipeline from SCM โหลดไฟล์จาก branch ใ�
 A: ยังไม่ได้ยืนยัน webhook จริง เพราะ local Jenkins ที่ `localhost` รับ event จาก GitHub ภายนอกไม่ได้ ต้องมี URL สาธารณะและตั้ง webhook
 
 **Q: โครงการเสร็จครบแผนหรือยัง?**  
-A: ฟีเจอร์หลักรวม admin management ทำได้แล้ว แต่ QR/shareable passport, การแจ้งเตือนนอกแอป, webhook สาธารณะ และวิดีโอเดโมยังไม่ครบ; local deploy ต้องตรวจผลล่าสุดก่อนอ้างว่าพร้อม
+A: ฟีเจอร์หลักรวม admin management และอีเมลเตือนนัดผ่าน RabbitMQ ทำได้แล้ว แต่ QR/shareable passport, การส่งอีเมลจริงผ่านผู้ให้บริการ SMTP, webhook สาธารณะ และวิดีโอเดโมยังไม่ครบ; local deploy ต้องตรวจผลล่าสุดก่อนอ้างว่าพร้อม
 
 ## 14. จุดอ่านโค้ดต่อเมื่ออยากตอบเชิงลึก
 
@@ -353,7 +367,7 @@ A: ฟีเจอร์หลักรวม admin management ทำได้�
 2. [frontend/src/App.jsx](../frontend/src/App.jsx): ทุกหน้าและ role gate.
 3. [frontend/src/components/HealthRecords.jsx](../frontend/src/components/HealthRecords.jsx): ฟอร์ม/แท็บประวัติ.
 4. [backend/src/routes/auth.routes.js](../backend/src/routes/auth.routes.js) และ [middlewares/auth.js](../backend/src/middlewares/auth.js): login/JWT/role.
-5. [backend/src/routes/reminders.routes.js](../backend/src/routes/reminders.routes.js): อัลกอริทึม reminder.
+5. [backend/src/routes/reminders.routes.js](../backend/src/routes/reminders.routes.js): อัลกอริทึม reminder และ email opt-in; [notification worker](../backend/src/notification-worker.js) กับ [delivery logic](../backend/src/services/appointment-notifications.js): RabbitMQ/SMTP/retry.
 6. [backend/src/routes/dashboard.routes.js](../backend/src/routes/dashboard.routes.js): สถิติและกราฟ.
 7. [database/init.sql](../database/init.sql): ความสัมพันธ์และ constraints.
 8. [Jenkinsfile](../Jenkinsfile), [docker-compose.yml](../docker-compose.yml), [k8s/](../k8s/): การส่งระบบขึ้นรัน.
@@ -369,6 +383,7 @@ A: ฟีเจอร์หลักรวม admin management ทำได้�
 | Login ไม่ผ่าน | เช็กว่าเป็นบัญชีของ **แอป** ไม่ใช่ Jenkins; Compose กับ kind มีฐานข้อมูลคนละชุด; fresh seed กับ volume เดิมมีข้อมูลต่างกัน; อย่าแสดงรหัสผ่านจริงบนจอ |
 | เข้า URL แล้วเด้งไปหน้าอื่น | เช็กว่าล็อกอิน role ใด, token หมดอายุหรือไม่ และ URL นั้นอนุญาต role นั้นไหม |
 | Reminder หรือกราฟไม่ขึ้น | Reminder แสดงเฉพาะเหตุการณ์ใน 30 วันข้างหน้า; กราฟต้องมี `weight_records` ไม่ใช่เพียงค่า weight ใน pet profile; ตรวจข้อมูลในฐานข้อมูลชุดที่กำลังใช้ |
+| อีเมลไม่เข้า Mailpit | Owner ต้องเปิด opt-in, นัดต้องเป็น `upcoming` และอยู่ใน 24 ชั่วโมงข้างหน้า; ตรวจ `notification-worker`/RabbitMQ/Mailpit logs และ `appointment_notifications` ใน DB; Compose Mailpit อยู่ `localhost:8025` |
 | เพิ่มไฟล์ไม่สำเร็จ | เอกสารต้องเป็น PDF/PNG/JPEG ไม่เกิน 10 MB; รูปสัตว์ต้องเป็น JPG/PNG/WebP ไม่เกิน 5 MB; ตรวจ uploads volume/PVC และสิทธิ์เขียน |
 | Jenkins ไม่มีตัวเลือก `kind` | job แบบ SCM ยังโหลด `Jenkinsfile` เก่าหรือยังไม่ commit/push; ตรวจ branch และ build parameter ของ job |
 | Jenkins build ล้มที่ Secret file | ตรวจ credential ID `pet-health-passport-env` และคีย์ใน env file; หลีกเลี่ยงคัดลอกค่าลง console |

@@ -15,6 +15,9 @@ $k8sDir = Join-Path $projectRoot 'k8s'
 if (-not (Test-Path -LiteralPath $EnvFile -PathType Leaf)) {
   throw "Missing env file: $EnvFile. Create it from .env.example first."
 }
+if (-not (Select-String -LiteralPath $EnvFile -Pattern '^RABBITMQ_PASSWORD=(?!replace_with_a_unique_random_password\s*$).+$' -Quiet)) {
+  throw 'RABBITMQ_PASSWORD is required in the env file. Set a unique password before deploying.'
+}
 if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
   throw 'kubectl is required. Enable it in Docker Desktop or install the official Kubernetes client.'
 }
@@ -112,15 +115,16 @@ $secretYaml | & kubectl --context $context -n $namespace apply -f -
 if ($LASTEXITCODE -ne 0) { throw 'Could not apply the Kubernetes Secret.' }
 
 Invoke-Checked 'kubectl' @('--context', $context, 'apply', '-k', $k8sDir)
-foreach ($name in @('backend', 'frontend')) {
+foreach ($name in @('backend', 'frontend', 'notification-worker')) {
   $deployment = Join-Path $k8sDir "$name-deployment.yaml"
-  $taggedYaml = & kubectl set image -f $deployment "$name=pet-health-passport-${name}:$imageTag" --local -o yaml
+  $imageName = if ($name -eq 'notification-worker') { 'backend' } else { $name }
+  $taggedYaml = & kubectl set image -f $deployment "$name=pet-health-passport-${imageName}:$imageTag" --local -o yaml
   if ($LASTEXITCODE -ne 0) { throw "Could not tag the $name Deployment." }
   $taggedYaml | & kubectl --context $context -n $namespace apply -f -
   if ($LASTEXITCODE -ne 0) { throw "Could not apply the $name Deployment." }
 }
 
-foreach ($resource in @('statefulset/postgres', 'deployment/backend', 'deployment/frontend', 'deployment/php-traefik')) {
+foreach ($resource in @('statefulset/postgres', 'deployment/rabbitmq', 'deployment/mailpit', 'deployment/backend', 'deployment/frontend', 'deployment/notification-worker', 'deployment/php-traefik')) {
   Invoke-Checked 'kubectl' @('--context', $context, '-n', $namespace, 'rollout', 'status', $resource, '--timeout=240s')
 }
 

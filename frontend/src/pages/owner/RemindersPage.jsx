@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listReminders, markReminderRead } from '../../api/reminders.js';
+import { getEmailNotificationPreference, listReminders, markReminderRead, setEmailNotificationPreference } from '../../api/reminders.js';
 import { AppShell } from '../../components/AppShell.jsx';
 
 const formatDate = (value) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(new Date(`${value}T12:00:00`));
@@ -11,6 +11,27 @@ export function RemindersPage() {
   const [status, setStatus] = useState('loading');
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
+  const [emailEnabled, setEmailEnabled] = useState(false);
+  const [preferenceStatus, setPreferenceStatus] = useState('loading');
+
+  useEffect(() => {
+    getEmailNotificationPreference()
+      .then((enabled) => { setEmailEnabled(enabled); setPreferenceStatus('ready'); })
+      .catch(() => setPreferenceStatus('error'));
+  }, []);
+
+  async function changeEmailPreference(event) {
+    const enabled = event.target.checked;
+    setPreferenceStatus('saving');
+    setError('');
+    try {
+      setEmailEnabled(await setEmailNotificationPreference(enabled));
+      setPreferenceStatus('ready');
+    } catch (requestError) {
+      setPreferenceStatus('ready');
+      setError(requestError.response?.data?.error ?? 'ไม่สามารถบันทึกการตั้งค่าอีเมลได้');
+    }
+  }
 
   useEffect(() =>  {
     let active = true;
@@ -38,6 +59,10 @@ export function RemindersPage() {
   return (
     <AppShell>
       <div className="page-heading"><p className="eyebrow">Coming Up</p><h1>Reminders</h1></div>
+      <div className="reminder-email-setting">
+        <label><input type="checkbox" checked={emailEnabled} disabled={preferenceStatus !== 'ready'} onChange={changeEmailPreference} /> รับอีเมลเตือนก่อนนัดหมาย 24 ชั่วโมง</label>
+        {preferenceStatus === 'error' && <p className="inline-error" role="alert">ไม่สามารถโหลดการตั้งค่าอีเมลได้</p>}
+      </div>
       {status === 'loading' && <p className="muted" role="status">กำลังโหลดรายการแจ้งเตือน...</p>}
       {status === 'error' && <p className="inline-error" role="alert">ไม่สามารถโหลดรายการแจ้งเตือนได้</p>}
       {error && <p className="inline-error" role="alert">{error}</p>}

@@ -1,15 +1,15 @@
 # Local Kubernetes with kind
 
-This optional deployment runs beside Docker Compose on the same laptop. It uses a single-node kind cluster, Traefik Ingress, PostgreSQL, the Express API, and the React frontend. The application is available at `http://localhost:8081`; Jenkins remains at `http://localhost:8080` and the Compose frontend at `http://localhost:5173`.
+This optional deployment runs beside Docker Compose on the same laptop. It uses a single-node kind cluster, Traefik Ingress, PostgreSQL, RabbitMQ, Mailpit, an appointment notification worker, the Express API, and the React frontend. The application is available at `http://localhost:8081`; Jenkins remains at `http://localhost:8080` and the Compose frontend at `http://localhost:5173`.
 
 ## First deployment
 
 1. Install and start Docker Desktop. Install `kubectl` (Docker Desktop can provide it). Leave Docker Desktop's built-in Kubernetes disabled; kind creates its own cluster.
-2. Create the root `.env` from `.env.example` if needed. Set a strong `JWT_SECRET` and PostgreSQL password. Do not commit the file.
+2. Create the root `.env` from `.env.example` if needed. Set a strong `JWT_SECRET`, PostgreSQL password, and unique `RABBITMQ_PASSWORD`, with `RABBITMQ_USER=petpass`. Existing local env files can be prepared with `./open-project.ps1 -PrepareOnly`. Do not commit the file.
 3. In PowerShell at the repository root, run `./open-kubernetes.ps1`. The script downloads a checksum-verified kind binary into ignored `.tools/` if kind is not installed, creates the cluster, builds images, and deploys all workloads. First creation can take several minutes.
 4. Open `http://localhost:8081`. The script checks `http://localhost:8081/api/health` before reporting success.
 
-The script selects `kind-pet-health-passport` explicitly for its commands. Creating a new cluster may also make it the current `kubectl` context; use `kubectl config use-context <previous-context>` to switch back. Configuration lives in `k8s/`. The base `kustomization.yaml` excludes backend/frontend Deployments because the scripts apply them with unique image tags. PostgreSQL and uploads (documents and pet photos) use PVCs in the kind node. They are separate from the Compose volumes. Back up and migrate data deliberately if you need to bring existing users or files across.
+The script selects `kind-pet-health-passport` explicitly for its commands. Creating a new cluster may also make it the current `kubectl` context; use `kubectl config use-context <previous-context>` to switch back. Configuration lives in `k8s/`. The base `kustomization.yaml` excludes backend/frontend/worker Deployments because the scripts apply them with unique image tags. PostgreSQL, RabbitMQ, and uploads (documents and pet photos) use PVCs in the kind node. They are separate from the Compose volumes. Back up and migrate data deliberately if you need to bring existing users or files across.
 
 ## Inspect and operate
 
@@ -22,9 +22,13 @@ kubectl --context kind-pet-health-passport -n pet-health-passport rollout undo d
 kubectl --context kind-pet-health-passport -n pet-health-passport rollout restart deployment/backend
 kubectl --context kind-pet-health-passport -n pet-health-passport scale deployment/frontend --replicas=2
 kubectl --context kind-pet-health-passport -n pet-health-passport scale deployment/frontend --replicas=1
+kubectl --context kind-pet-health-passport -n pet-health-passport logs deployment/notification-worker --tail=100
+kubectl --context kind-pet-health-passport -n pet-health-passport port-forward svc/mailpit 8025:8025
 ```
 
-Run `./open-kubernetes.ps1` again to rebuild and roll out a new backend/frontend image tag. If Docker Desktop is running but the existing kind node stopped, the script restarts that node and waits for its API before deployment; it does not recreate the cluster. The PostgreSQL image is rebuilt too, but its data remains on its PVC. Backend and frontend use one replica by default. The backend's local `uploads` PVC holds private documents and pet photos; do not scale the backend above one replica without replacing it with shared storage. A kind cluster is for local development, not production availability.
+With the port-forward command running, open `http://localhost:8025` to see captured demo emails. The kind Mailpit mailbox is separate from Compose and is not persistent. Owners must enable appointment emails on the Reminders page; the default is off. The worker scans due appointments every 15 seconds and sends an email when the appointment falls within the configured lead window (24 hours by default). For a short demo, set `NOTIFICATION_LEAD_MINUTES=1` in the secret env file and redeploy the worker, then create an appointment one minute ahead. The worker uses Mailpit for local capture, not an external email provider.
+
+Run `./open-kubernetes.ps1` again to rebuild and roll out a new backend/frontend/worker image tag. If Docker Desktop is running but the existing kind node stopped, the script restarts that node and waits for its API before deployment; it does not recreate the cluster. PostgreSQL and RabbitMQ data remain on their PVCs. Backend, frontend, and worker use one replica by default. The backend's local `uploads` PVC holds private documents and pet photos; do not scale the backend above one replica without replacing it with shared storage. The worker's database scan is designed for one replica. A kind cluster is for local development, not production availability.
 
 ## Jenkins deployment
 
@@ -36,4 +40,4 @@ The pipeline tests and builds first, then loads tagged images into the existing 
 
 ## Cleanup
 
-`./.tools/kind.exe delete cluster --name pet-health-passport` (or `kind delete cluster --name pet-health-passport` if kind is on PATH) permanently removes this local cluster and its Kubernetes database and upload volumes. Back up data first. It does not remove Docker Compose volumes. The downloaded `.tools/` binary may be removed separately if no longer needed.
+`./.tools/kind.exe delete cluster --name pet-health-passport` (or `kind delete cluster --name pet-health-passport` if kind is on PATH) permanently removes this local cluster and its Kubernetes database, RabbitMQ, and upload volumes. Back up data first. It does not remove Docker Compose volumes. The downloaded `.tools/` binary may be removed separately if no longer needed.

@@ -5,6 +5,10 @@ if [ "$#" -ne 2 ] || [ ! -f "$1" ]; then
   echo 'Usage: deploy-kind.sh <Jenkins secret env file> <image tag>' >&2
   exit 1
 fi
+if ! grep -q '^RABBITMQ_PASSWORD=.' "$1" || grep -q '^RABBITMQ_PASSWORD=replace_with_a_unique_random_password$' "$1"; then
+  echo 'RABBITMQ_PASSWORD is required in the Jenkins secret env file.' >&2
+  exit 1
+fi
 
 cluster_name=pet-health-passport
 namespace=pet-health-passport
@@ -35,10 +39,13 @@ backend_yaml=$(kubectl set image -f k8s/backend-deployment.yaml \
   "backend=pet-health-passport-backend:$2" --local -o yaml)
 frontend_yaml=$(kubectl set image -f k8s/frontend-deployment.yaml \
   "frontend=pet-health-passport-frontend:$2" --local -o yaml)
+worker_yaml=$(kubectl set image -f k8s/notification-worker-deployment.yaml \
+  "notification-worker=pet-health-passport-backend:$2" --local -o yaml)
 printf '%s\n' "$backend_yaml" | kubectl -n "$namespace" apply -f -
 printf '%s\n' "$frontend_yaml" | kubectl -n "$namespace" apply -f -
+printf '%s\n' "$worker_yaml" | kubectl -n "$namespace" apply -f -
 
-for workload in statefulset/postgres deployment/backend deployment/frontend deployment/php-traefik; do
+for workload in statefulset/postgres deployment/rabbitmq deployment/mailpit deployment/backend deployment/frontend deployment/notification-worker deployment/php-traefik; do
   kubectl -n "$namespace" rollout status "$workload" --timeout=240s
 done
 

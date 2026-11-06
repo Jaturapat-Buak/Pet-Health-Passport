@@ -1,3 +1,5 @@
+param([switch] $PrepareOnly)
+
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -53,6 +55,32 @@ function Ensure-JwtSecret {
     }
 }
 
+function Ensure-RabbitPassword {
+    param([string] $Path)
+
+    $content = Get-Content -Path $Path -Raw
+    $addedUser = $false
+    if ($content -notmatch '(?m)^RABBITMQ_USER=.+$') {
+        if (-not $content.EndsWith("`n")) { $content += "`r`n" }
+        $content += "RABBITMQ_USER=petpass`r`n"
+        $addedUser = $true
+    }
+    $secretMatch = [regex]::Match($content, '(?m)^RABBITMQ_PASSWORD=(.*)$')
+    if ($secretMatch.Success -and $secretMatch.Groups[1].Value.Trim() -notin @('', 'replace_with_a_unique_random_password')) {
+        if ($addedUser) { Set-Content -Path $Path -Value $content -NoNewline }
+        return
+    }
+    $password = [BitConverter]::ToString([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).Replace('-', '')
+    if ($secretMatch.Success) {
+        $content = [regex]::Replace($content, '(?m)^RABBITMQ_PASSWORD=.*$', "RABBITMQ_PASSWORD=$password", 1)
+    } else {
+        if (-not $content.EndsWith("`n")) { $content += "`r`n" }
+        $content += "RABBITMQ_PASSWORD=$password`r`n"
+    }
+    Set-Content -Path $Path -Value $content -NoNewline
+    Write-Host "Prepared RabbitMQ password in $Path"
+}
+
 function Get-EnvValue {
     param(
         [string] $Path,
@@ -85,6 +113,8 @@ Ensure-EnvFile -Path (Join-Path $ProjectRoot ".env") -ExamplePath (Join-Path $Pr
 Ensure-EnvFile -Path (Join-Path $ProjectRoot "backend\.env") -ExamplePath (Join-Path $ProjectRoot "backend\.env.example")
 Ensure-JwtSecret -Path (Join-Path $ProjectRoot ".env")
 Ensure-JwtSecret -Path (Join-Path $ProjectRoot "backend\.env")
+Ensure-RabbitPassword -Path (Join-Path $ProjectRoot ".env")
+if ($PrepareOnly) { return }
 
 Write-Step "Checking Docker"
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {

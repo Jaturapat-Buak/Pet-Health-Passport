@@ -438,3 +438,6 @@ a.dashboard-row:hover { background: #eef5f1; }
 .directory-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 20px; font-size: 20px; }
 .care-directory-table td { vertical-align: middle; }
 @media (max-width: 760px) { .care-directory-table { min-width: 700px; } }
+.reminder-email-setting { margin-bottom: 24px; }
+.reminder-email-setting label { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; }
+.app-shell .reminder-email-setting input[type="checkbox"] { width: 20px; height: 20px; min-width: 20px; margin: 0; accent-color: #168469; }

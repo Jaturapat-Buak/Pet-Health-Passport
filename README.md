@@ -14,18 +14,20 @@ The interface uses TH Sarabun PSK, with English branding and page/section headin
 - Backend: Node.js, Express, PostgreSQL driver, bcrypt, JSON Web Tokens
 - Database: PostgreSQL 16
 - DevOps: Docker Compose, Jenkins, and local Kubernetes (kind)
+- Background notifications: RabbitMQ, a Node.js worker, Nodemailer, and Mailpit for local email previews
 
 ## System architecture
 
 ```text
 React/Vite or Nginx frontend -> Express API -> PostgreSQL
+                                           PostgreSQL -> notification worker -> RabbitMQ -> notification worker -> Mailpit/SMTP
 ```
 
 In Docker, Nginx proxies `/api` requests to the backend service. The browser keeps the JWT in session storage and sends it as a bearer token. Signing out clears the browser token; tokens also expire after 12 hours.
 
 ## Database design
 
-The PostgreSQL initialization scripts define `users`, `pets`, `pet_vet_access`, `vaccination_records`, `medical_records`, `allergy_records`, `medication_records`, `appointments`, `weight_records`, `documents`, and `reminders`.
+The PostgreSQL initialization scripts define `users`, `pets`, `pet_vet_access`, `vaccination_records`, `medical_records`, `allergy_records`, `medication_records`, `appointments`, `weight_records`, `documents`, `reminders`, and `appointment_notifications`.
 
 ## API endpoints
 
@@ -50,6 +52,8 @@ GET/PUT/DELETE /api/appointments/:id
 PATCH /api/appointments/:id/status
 GET /api/reminders
 PATCH /api/reminders/:id/read
+GET /api/reminders/preferences
+PUT /api/reminders/preferences
 GET /api/dashboard/owner
 GET /api/dashboard/admin
 GET/POST /api/pets/:id/vets
@@ -73,7 +77,7 @@ Health record `:type` is one of `vaccinations`, `medical-records`, `allergies`, 
 
 Owners can view appointments for their own pets. Only veterinarians and admins can create, edit, cancel, complete, or delete appointments. Veterinarians are limited to pets currently in their care, while admins can manage all appointments. `/api/appointments?view=upcoming` returns accessible future appointments still marked upcoming. Appointment ownership always follows the pet owner.
 
-The reminders page derives in-app alerts for appointments, vaccinations, medication end dates, and medical follow-ups within the next 30 days. Read state is stored in the existing `reminders` table; changing an event date creates a new unread reminder. The app does not send email or push notifications.
+The reminders page derives in-app alerts for appointments, vaccinations, medication end dates, and medical follow-ups within the next 30 days. Read state is stored in the `reminders` table; changing an event date creates a new unread reminder. Owners can separately opt in to appointment emails on that page (off by default). The notification worker scans for upcoming appointments within `NOTIFICATION_LEAD_MINUTES` (default 1440, or 24 hours), stores a delivery job in PostgreSQL, publishes its ID and appointment date to a durable RabbitMQ queue, and sends through SMTP. It checks the current appointment, owner, and opt-in setting before sending. Failed SMTP deliveries retry up to five times; stale or duplicate queue deliveries are checked against job state. This is at-least-once processing, so a crash after SMTP accepts a message but before the database records success can still produce a duplicate email. Email delivery is for appointments only; other reminders remain in-app. There is no LINE or push delivery.
 
 The owner dashboard shows account-scoped counts, upcoming care, unread reminders, recent health records, active medications, and a per-pet weight chart (latest 12 entries). Veterinarian access on the owner profile is a read-only status and list of assigned vets; owners cannot change care assignments through the UI or API.
 
@@ -85,11 +89,11 @@ The backend unit suite runs with `npm test`. The PostgreSQL role-policy integrat
 
 ## Run locally
 
-1. Copy the root `.env.example` to `.env` and set a unique random `JWT_SECRET` of at least 32 bytes for Docker Compose. Do not keep the example secret.
+1. Copy the root `.env.example` to `.env` and set a unique random `JWT_SECRET` of at least 32 bytes and a unique `RABBITMQ_PASSWORD` for Docker Compose. Do not keep example secrets.
 2. Start PostgreSQL with `docker compose up -d postgres`.
 3. Copy `backend/.env.example` to `backend/.env` and set the same database credentials and `JWT_SECRET`. In one terminal, run `npm ci` then `npm run dev` from `backend`.
 4. In another terminal, run `npm ci` then `npm run dev` from `frontend`.
-5. Open `http://localhost:5173`.
+5. Open `http://localhost:5173`. The local backend/frontend dev servers alone do not send email; run the RabbitMQ, Mailpit, and worker Compose services or use the full Compose stack to test email notifications.
 
 ## Run with Docker
 
@@ -97,15 +101,15 @@ The backend unit suite runs with `npm test`. The PostgreSQL role-policy integrat
 docker compose up --build -d --wait --wait-timeout 120
 ```
 
-Copy `.env.example` to `.env` and replace `JWT_SECRET` with a unique random value of at least 32 bytes before starting. The backend rejects the example secret or a shorter value in production. Compose waits until PostgreSQL, the API, and the frontend proxy are healthy. Open `http://localhost:5173`. Docker initializes the schema and seed data only when its PostgreSQL volume is first created.
+Copy `.env.example` to `.env` and replace `JWT_SECRET` with a unique random value of at least 32 bytes and `RABBITMQ_PASSWORD` with a unique password before starting. The backend rejects the example JWT secret or a shorter value in production. Compose waits until PostgreSQL, RabbitMQ, the API, frontend, and worker are healthy. Open the app at `http://localhost:5173`, the captured demo mailbox at `http://localhost:8025`, and RabbitMQ management at `http://localhost:15672` (both bound to localhost). Demo emails do not leave the laptop. Docker initializes the schema and seed data only when its PostgreSQL volume is first created; startup migration updates existing volumes without deleting data.
 
 The backend creates the `pet_vet_access` table and adds medical-record author tracking at startup for existing PostgreSQL volumes. No volume reset is needed for this update.
 
-On Windows, you can also double-click `open-project.bat` from the project folder. It creates missing env files, fixes an unsafe local `JWT_SECRET`, starts Docker Compose, and opens the app when it is ready.
+On Windows, you can also double-click `open-project.bat` from the project folder. It creates missing env files, prepares local JWT/RabbitMQ secrets, starts Docker Compose, and opens the app when it is ready. `./open-project.ps1 -PrepareOnly` updates local env files without starting services.
 
 ## Jenkins CI/CD pipeline
 
-`Jenkinsfile` has stages for checkout, dependency installation, backend tests, frontend build, Docker build, Docker Compose deployment, and an API health check. It supports Windows and Unix agents, reads Compose settings from a Jenkins Secret file credential, and waits for healthy services before finishing. The `githubPush()` trigger is ready; a public Jenkins URL and job are required to activate the GitHub webhook. See [Jenkins setup](docs/JENKINS_SETUP.md) for the job, credential, and webhook steps.
+`Jenkinsfile` has stages for checkout, dependency installation, backend tests, frontend build, Docker build, Docker Compose deployment, and API/worker health checks. It supports Windows and Unix agents, reads Compose settings from a Jenkins Secret file credential (now also requiring `RABBITMQ_USER` and `RABBITMQ_PASSWORD`), and waits for healthy services before finishing. The `githubPush()` trigger is ready; a public Jenkins URL and job are required to activate the GitHub webhook. See [Jenkins setup](docs/JENKINS_SETUP.md) for the job, credential, and webhook steps.
 
 To run Jenkins locally with Docker:
 
@@ -117,7 +121,7 @@ This starts Jenkins at `http://localhost:8080` with Node.js, npm, Docker CLI, Do
 
 ## Run with Kubernetes
 
-On Windows with Docker Desktop and `kubectl`, run `./open-kubernetes.ps1` from PowerShell. It installs a checksum-verified local `kind` binary when needed, builds and loads the app images, creates a cluster, deploys PostgreSQL, the API, frontend, and Traefik, then checks the public API. Open `http://localhost:8081`. The cluster uses separate persistent volumes from Docker Compose; existing Compose database and uploads are **not** migrated automatically. See [Kubernetes setup](docs/KUBERNETES_SETUP.md) for prerequisites, Jenkins deployment, checks, and cleanup.
+On Windows with Docker Desktop and `kubectl`, run `./open-kubernetes.ps1` from PowerShell. It installs a checksum-verified local `kind` binary when needed, builds and loads the app images, creates a cluster, deploys PostgreSQL, RabbitMQ, Mailpit, the API, frontend, notification worker, and Traefik, then checks the public API. Open `http://localhost:8081`. Use `kubectl port-forward` for the kind demo mailbox as described in [Kubernetes setup](docs/KUBERNETES_SETUP.md). The cluster uses separate persistent volumes from Docker Compose; existing Compose database and uploads are **not** migrated automatically.
 
 ## Demo accounts
 

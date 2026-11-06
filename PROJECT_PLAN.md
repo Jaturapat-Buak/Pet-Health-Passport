@@ -1,5 +1,7 @@
 # Pet Health Passport
 
+> This is the original project plan. For the current implementation, including the RabbitMQ appointment-email extension added later, see [README.md](README.md) and [docs/PROJECT_STUDY_AND_PRESENTATION.md](docs/PROJECT_STUDY_AND_PRESENTATION.md).
+
 ## 1. Project Overview
 
 **Project Name:** Pet Health Passport\

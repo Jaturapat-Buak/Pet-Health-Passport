@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-worker
+  namespace: pet-health-passport
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-worker
+  template:
+    metadata:
+      labels:
+        app: notification-worker
+    spec:
+      containers:
+        - name: notification-worker
+          image: pet-health-passport-backend:kind
+          imagePullPolicy: Never
+          command: ["node", "src/notification-worker.js"]
+          envFrom:
+            - configMapRef:
+                name: pet-health-passport-config
+            - secretRef:
+                name: pet-health-passport-secrets
+          startupProbe:
+            exec:
+              command: ["node", "src/notification-healthcheck.js"]
+            periodSeconds: 5
+            failureThreshold: 36
+          readinessProbe:
+            exec:
+              command: ["node", "src/notification-healthcheck.js"]
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["node", "src/notification-healthcheck.js"]
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

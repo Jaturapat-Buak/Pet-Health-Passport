@@ -13,6 +13,7 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   role user_role NOT NULL DEFAULT 'owner',
   phone VARCHAR(30),
+  email_notifications_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -144,10 +145,27 @@ CREATE TABLE reminders (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE appointment_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  appointment_id UUID NOT NULL UNIQUE REFERENCES appointments(id) ON DELETE CASCADE,
+  recipient_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  appointment_date TIMESTAMPTZ NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'queued', 'processing', 'failed', 'sent', 'dead')),
+  attempts INTEGER NOT NULL DEFAULT 0,
+  next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  queued_at TIMESTAMPTZ,
+  processing_started_at TIMESTAMPTZ,
+  sent_at TIMESTAMPTZ,
+  last_error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX idx_pets_owner_id ON pets(owner_id);
 CREATE INDEX idx_pet_vet_access_vet_id ON pet_vet_access(vet_id);
 CREATE INDEX idx_vaccinations_pet_id ON vaccination_records(pet_id);
 CREATE INDEX idx_medical_records_pet_id ON medical_records(pet_id);
 CREATE INDEX idx_appointments_owner_id_date ON appointments(owner_id, appointment_date);
 CREATE INDEX idx_reminders_user_id_date ON reminders(user_id, reminder_date);
+CREATE INDEX idx_appointment_notifications_due ON appointment_notifications(status, next_attempt_at);
 

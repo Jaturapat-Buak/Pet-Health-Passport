@@ -5,4 +5,5 @@ resources:
   - postgres.yaml
   - backend.yaml
   - frontend.yaml
+  - notifications.yaml
   - ingress.yaml

@@ -1,12 +1,12 @@
 # Jenkins and GitHub Webhook Setup
 
-Phase 7 uses the root `Jenkinsfile` and `docker-compose.yml`. The pipeline checks out `main`, installs dependencies, runs backend tests, builds the frontend and images, deploys with Compose, waits for healthy services, and checks the API from inside the backend container. It works on Windows and Unix agents.
+Phase 7 uses the root `Jenkinsfile` and `docker-compose.yml`. The pipeline checks out `main`, installs dependencies, runs backend tests, builds the frontend and images, deploys with Compose, waits for healthy services, and checks the API and notification worker. It works on Windows and Unix agents.
 
 ## Jenkins prerequisites
 
 - A Jenkins Pipeline job on an agent with Node.js 24, npm, Git, Docker CLI, Docker Compose v2, and access to the Docker daemon. The agent is the deployment host.
 - Jenkins plugins: Pipeline, Git, GitHub, and Credentials Binding.
-- Free host ports for the services (`5173`, `5000`, and `5432` by default). If another Compose stack already runs on that host, set `COMPOSE_PROJECT_NAME` in the secret env file to its existing project name to update it, or use different ports and a separate project name.
+- Free host ports for the services (`5173`, `5000`, `5432`, `8025`, and `15672` by default). Mailpit and RabbitMQ management bind to localhost only. If another Compose stack already runs on that host, set `COMPOSE_PROJECT_NAME` in the secret env file to its existing project name to update it, or use different ports and a separate project name.
 - A Jenkins URL reachable from GitHub over HTTPS for automatic webhook delivery. A local-only `localhost` URL cannot be used as the GitHub payload URL.
 
 ## Start local Jenkins with Docker
@@ -23,11 +23,11 @@ Open `http://localhost:8080`, unlock Jenkins with the initial admin password pri
 
 ## Configure the job
 
-1. Push the repository and create a **Secret file** credential in Jenkins with ID `pet-health-passport-env`. Its contents should follow the root `.env.example`, with a unique `JWT_SECRET` of at least 32 bytes and a real PostgreSQL password. Keep the file in Jenkins Credentials, not in Git.
+1. Push the repository and create a **Secret file** credential in Jenkins with ID `pet-health-passport-env`. Its contents should follow the root `.env.example`, with a unique `JWT_SECRET` of at least 32 bytes, PostgreSQL password, `RABBITMQ_USER`, and unique `RABBITMQ_PASSWORD`. Existing Jenkins Secret files must be replaced with a version containing the RabbitMQ keys before the next build. Keep the file in Jenkins Credentials, not in Git.
 2. Create a regular **Pipeline** job. Under **Pipeline**, select **Pipeline script from SCM**, choose **Git**, set repository URL to `https://github.com/Jaturapat-Buak/Pet-Health-Passport.git`, branch specifier to `*/main`, and script path to `Jenkinsfile`. Add Git credentials if the repository is private.
 3. Run **Build Now** once. This loads the Jenkinsfile and registers its `githubPush()` trigger. Check the pipeline stages and the output of `docker compose ps` in the Health Check stage.
 
-The pipeline passes the Jenkins secret file to Compose using `--env-file`. If the PostgreSQL volume already exists, its database password must match the one used to initialize that volume. The `.env` file in a developer checkout is not used by Jenkins. The `DEPLOY_TARGET` build parameter defaults to `compose`; select `kind` only after creating the local cluster. The `kind` target loads fresh images and deploys to Kubernetes using the same Secret file credential. See [Kubernetes setup](KUBERNETES_SETUP.md). Changes to the Jenkinsfile must be pushed to the branch configured in the SCM job before Jenkins can use them.
+The pipeline passes the Jenkins secret file to Compose using `--env-file`. If PostgreSQL or RabbitMQ volumes already exist, their passwords must match the values used to initialize them. The `.env` file in a developer checkout is not used by Jenkins. The `DEPLOY_TARGET` build parameter defaults to `compose`; select `kind` only after creating the local cluster. The `kind` target loads fresh images and deploys to Kubernetes using the same Secret file credential. See [Kubernetes setup](KUBERNETES_SETUP.md). Changes to the Jenkinsfile must be pushed to the branch configured in the SCM job before Jenkins can use them.
 
 ## Connect the webhook
 
